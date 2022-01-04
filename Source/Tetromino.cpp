@@ -1,7 +1,6 @@
 #include <vector>
 #include <utility>
 
-#include "Headers/Global.hpp"
 #include "Headers/Tetromino.hpp"
 #include "Headers/CheckWallKick.hpp"
 

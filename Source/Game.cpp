@@ -9,12 +9,24 @@ Tetris::Tetris() {
 
 	//Get the current time and store it in the variable
 	previous_time = std::chrono::steady_clock::now();
+
+	rotate_sound.loadFromFile("Source/Resources/Sounds/rotate.wav");
+	normal_drop_sound.loadFromFile("Source/Resources/Sounds/selection.wav");
+	hard_drop_sound.loadFromFile("Source/Resources/Sounds/fall2.wav");
+	line_clear_sound.loadFromFile("Source/Resources/Sounds/line.wav");
+	lost_sound.loadFromFile("Source/Resources/Sounds/gameover.wav");
+	opening_sound.loadFromFile("Source/Resources/Sounds/success.wav");
 }
 
 void Tetris::start() {
 	//While the window is open
 	sf::Clock clock;
 	float duration = 0.f;
+
+
+	player.setBuffer(opening_sound);
+	player.play();
+
 	while (window.isOpen() == 1)
 	{
 		setLagTime();
@@ -36,12 +48,16 @@ void Tetris::start() {
 						{
 							rotate_pressed = 1;
 							tetromino.rotate(1, matrix);
+							player.setBuffer(rotate_sound);
+						    player.play();
 						} 
 						else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
 						{
 							rotate_pressed = 1;
 							tetromino.rotate(0, matrix);
-						}
+							player.setBuffer(rotate_sound);
+							player.play();
+						}						
 					}
 
 					if (move_timer == 0)
@@ -81,6 +97,9 @@ void Tetris::start() {
 							}
 							scores += (ROWS - max_y) * HARD_DROP_SCORE;
 
+							player.setBuffer(hard_drop_sound);
+							player.play();
+
 							tetromino.hard_drop(matrix);
 						}
 					}
@@ -111,12 +130,12 @@ void Tetris::start() {
 							//Put the falling tetromino to the matrix
 							//play sound and glowing
 							tetromino.update_matrix(matrix);
-
+							
 							//check any lines to clear
 							clearLines();
 
 							//If the effect timer is over
-							if (clear_effect_timer == 0)
+							if (clear_effect_timer == 0) 
 								checkLost();
 						}
 						
@@ -142,6 +161,9 @@ void Tetris::start() {
 					if (game_over == 1 && sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
 						restart(duration);
 						is_started = 0;
+
+						player.setBuffer(opening_sound);
+						player.play();
 					}	
 					
 					// restart
@@ -348,7 +370,14 @@ void Tetris::checkLost() {
 	next_shape = shape_distribution(random_engine);
 
 	if (game_over == 1) {
+
+		player.setBuffer(lost_sound);
+		player.play();
+
+		tetromino.hard_drop(matrix);
 		scores += std::max<int>((lines_cleared - LINE_BONUS) * LINE_BONUS_SCORE, 0);
+
+		score_list.emplace_back(getTime(),scores);
 	}
 }
 
@@ -497,4 +526,13 @@ std::vector<Position> Tetris::get_tetromino(unsigned char i_shape, unsigned char
 
 	//Return the tetromino
 	return new_tetromino;
+}
+
+std::string Tetris::getTime() {
+	std::time_t raw_time = std::time(nullptr);
+	struct tm time_info;
+	localtime_s(&time_info, &raw_time);
+	char buffer[100];
+	std::strftime(buffer, 32, "%Y-%m-%d %H:%M:%S", &time_info);
+	return buffer;
 }

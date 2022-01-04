@@ -11,7 +11,7 @@ void Tetris::drawText(float i_x, float i_y, const std::string& i_text, sf::Rende
 	sf::Sprite character_sprite;
 
 	sf::Texture font_texture;
-	font_texture.loadFromFile("Tetris-Main/Source/Resources/Images/Font.png");
+	font_texture.loadFromFile("Source/Resources/Images/Font.png");
 
 	//We're gonna calculate the width of the character based on the font image size
 	//96 because there are 96 character in the image
@@ -44,6 +44,20 @@ void Tetris::drawText(float i_x, float i_y, const std::string& i_text, sf::Rende
 	}
 }
 
+void Tetris::drawBorder() {
+	float top_x = CELL_SIZE * (1.5f * COLUMNS - 2.5f), 
+		  top_y = CELL_SIZE * (0.25f * ROWS - 2.5f);
+
+	sf::RectangleShape preview_border(sf::Vector2f(5 * CELL_SIZE, 5 * CELL_SIZE));
+	preview_border.setFillColor(sf::Color(0, 0, 0));
+	preview_border.setOutlineThickness(-1);
+	preview_border.setPosition(top_x, top_y);
+	window.draw(preview_border);
+
+	if (is_started == 1 && game_over == 0)
+		drawText(top_x + 5, top_y - 7, "Up next:", window, .4f);
+}
+
 void Tetris::drawBoard(std::string timerString) {
 	//Here we're drawing everything!
 	if (FRAME_DURATION > lag)
@@ -51,16 +65,9 @@ void Tetris::drawBoard(std::string timerString) {
 
 		//Clear the window from the previous frame
 		window.clear();
-
-
+		
 		//Draw the preview border
-		sf::RectangleShape preview_border(sf::Vector2f(5 * CELL_SIZE, 5 * CELL_SIZE));
-		preview_border.setFillColor(sf::Color(0, 0, 0));
-		preview_border.setOutlineThickness(-1);
-		preview_border.setPosition(CELL_SIZE * (1.5f * COLUMNS - 2.5f),
-			CELL_SIZE * (0.25f * ROWS - 2.5f));
-		window.draw(preview_border);
-
+		drawBorder();
 
 		//We're gonna use this object to draw every cell in the game
 		sf::RectangleShape cell(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
@@ -125,7 +132,7 @@ void Tetris::drawBoard(std::string timerString) {
 
 		if (is_started == 1 && game_over == 0) {
 			drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
-				static_cast<unsigned int>(0.5f * CELL_SIZE * ROWS) + 58,
+				static_cast<unsigned int>(0.5f * CELL_SIZE * ROWS) + 59,
 				"Press P to pause", window, .3f);
 		}
 
@@ -227,6 +234,11 @@ void Tetris::drawEffect(sf::RectangleShape& cell) {
 				cell.setSize(sf::Vector2f(clear_cell_size, clear_cell_size));
 
 				window.draw(cell);
+
+				player.setBuffer(line_clear_sound);
+				player.play();
+
+				tetromino.hard_drop(matrix);
 			}
 		}
 	}
@@ -255,8 +267,8 @@ void Tetris::drawHelp() {
 	// O to exit
 	dimBackground();
 
-	float top_x = 33, top_y = 20;
-	float size_x = 100, size_y = 110;
+	float top_x = 33, top_y = 30;
+	float size_x = 100, size_y = 90;
 
 	sf::RectangleShape help_border(sf::Vector2f(size_x, size_y));
 	help_border.setFillColor(sf::Color(0, 0, 0));
@@ -269,20 +281,40 @@ void Tetris::drawHelp() {
 		\nZ for counter-clockwise\
 		\nArrow left, right\
 		\nArrow down for soft-dropping\
-		\nSpace for hard-dropping", window, .35f);
+		\nSpace for hard-dropping\
+		\nFollow the prompts for more.", window, .35f);
 	
-	drawText(size_x - 5, size_y + 25, "Press O to continue", window, .4f);
+	drawText(size_x - 5, size_y + 35, "Press O to continue", window, .35f);
 	window.display();
 }
 
 void Tetris::drawLeaderboard() {
-	sf::RectangleShape leaderboard(sf::Vector2f(5 * CELL_SIZE, 5 * CELL_SIZE));
-	leaderboard.setFillColor(sf::Color(0, 0, 0));
-	leaderboard.setOutlineThickness(-1);
-	leaderboard.setPosition(static_cast<unsigned int>(CELL_SIZE) * COLUMNS / 2,
-		static_cast<unsigned int>(CELL_SIZE) * ROWS / 2);
-	drawText(30, 70, "HIGH SCORES", window, .4f);
-	window.draw(leaderboard);
+	dimBackground();
+
+	float top_x = 33, top_y = 30;
+	float size_x = 100, size_y = 90;
+
+	sf::RectangleShape help_border(sf::Vector2f(size_x, size_y));
+	help_border.setFillColor(sf::Color(0, 0, 0));
+	help_border.setOutlineThickness(-1);
+	help_border.setPosition(top_x, top_y);
+	drawText(top_x - 10, top_y - 7, "HIGH SCORE", window, .4f);
+	window.draw(help_border);
+
+	std::sort(score_list.begin(), score_list.end(), [&](const auto& a, const auto& b) {
+		return a.second > b.second; 
+		}
+	);
+
+	drawText(top_x + 5, top_y + 6, "         Time             Score\n", window, .33f);
+	std::string s = "";
+	for (auto& [time, score] : score_list) {
+		s += time + "       " + std::to_string(score) + "\n";
+	}
+
+	drawText(top_x + 5, top_y + 14, s, window, .33f);
+
+	drawText(size_x - 5, size_y + 35, "Press O to continue", window, .35f);
 	window.display();
 }
 

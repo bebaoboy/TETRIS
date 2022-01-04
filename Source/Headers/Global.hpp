@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <vector>
 
 //The size of the cell
 constexpr float CELL_SIZE = 8.0;

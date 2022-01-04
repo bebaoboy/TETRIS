@@ -2,8 +2,9 @@
 #include <chrono>
 #include <random>
 
-#include "Headers/Global.hpp"
-#include "Headers/Tetromino.hpp"
+#include "Tetromino.hpp"
+#include <SFML/Audio.hpp>
+
 class Tetris
 {
 	//Used to check whether the game is over or not
@@ -33,8 +34,10 @@ class Tetris
 	unsigned int next_shape;
 	//Timer for the tetromino's soft drop
 	unsigned int soft_drop_timer = 0;
+	
 	// Scoring
 	unsigned long scores = 0;
+	std::vector<std::pair< std::string, unsigned long>> score_list;
 
 	//Similar to lag, used to make the game framerate-independent
 	std::chrono::time_point<std::chrono::steady_clock> previous_time;
@@ -65,6 +68,13 @@ class Tetris
 	MainMatrix matrix = MainMatrix(COLUMNS, std::vector<int>(ROWS));
 
 	sf::Event event{};
+	sf::Sound player;
+
+	sf::SoundBuffer opening_sound;
+	sf::SoundBuffer hard_drop_sound, normal_drop_sound;
+	sf::SoundBuffer lost_sound;
+	sf::SoundBuffer line_clear_sound;
+	sf::SoundBuffer rotate_sound;
 
 	sf::RenderWindow window{
 		sf::VideoMode(2 * static_cast<unsigned int>(CELL_SIZE) * COLUMNS * SCREEN_RESIZE,
@@ -88,9 +98,11 @@ private:
 	void restart(float& duration);
 	std::string timer(float& duration, sf::Clock& clock);
 	std::vector<Position> get_tetromino(unsigned char i_shape, unsigned char i_x, unsigned char i_y);
+	std::string getTime();
 
 	void drawText(float i_x, float i_y, const std::string& i_text, sf::RenderWindow& i_window, float scale = 1.f);
 	void drawBoard(std::string timerString);
+	void drawBorder();
 	void drawGhost(sf::RectangleShape& cell);
 	void drawNext(sf::RectangleShape& cell);
 	void drawMatrix(sf::RectangleShape& cell);
