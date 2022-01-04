@@ -73,9 +73,15 @@ class Tetris
 	unsigned char shape = static_cast<unsigned int>(shape_distribution(random_engine));
 	//Falling tetromino. At the start we're gonna give it a random shape
 	Tetromino tetromino{ shape, get_tetromino(shape, COLUMNS / 2, 1) };
-
+	
 public:
 	Tetris();
 	void start();
+
+private:
+	void setLagTime();
+	void checkEvent();
+	void drawBoard(std::string timerString);
+	std::string timer(float& duration, sf::Clock& clock);
 };
 

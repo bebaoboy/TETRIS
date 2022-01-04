@@ -25,7 +25,7 @@ void draw_text(float i_x, float i_y, const std::string& i_text, sf::RenderWindow
 		{
 			//After every newline we put increase the y-coordinate and reset the x-coordinate
 			character_x = i_x;
-			character_y += font_texture.getSize().y;
+			character_y += font_texture.getSize().y * .5f;
 
 			continue;
 		}
@@ -34,9 +34,9 @@ void draw_text(float i_x, float i_y, const std::string& i_text, sf::RenderWindow
 		character_sprite.setPosition(character_x, character_y);
 		//Pick the character from the font image
 		character_sprite.setTextureRect(sf::IntRect(character_width * (a - 32), 0, character_width, font_texture.getSize().y));
-		character_sprite.setScale(.5f, .5f);
+		character_sprite.setScale(.3f, .3f);
 		//Increase the x-coordinate
-		character_x += character_width * .5f;
+		character_x += character_width * .3f;
 
 		//Draw the character
 		i_window.draw(character_sprite);

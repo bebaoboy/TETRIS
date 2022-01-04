@@ -12,7 +12,7 @@ public:
 	bool move_down(const MainMatrix& i_matrix);
 	bool reset(unsigned int i_shape, const MainMatrix& i_matrix, std::vector<Position> mino);
 
-	unsigned int get_shape(); // delete
+	unsigned int get_shape(); 
 
 	void hard_drop(const MainMatrix& i_matrix);
 	void move_left(const MainMatrix& i_matrix);
