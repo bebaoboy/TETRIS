@@ -15,7 +15,7 @@ void Tetris::start() {
 	//While the window is open
 	sf::Clock clock;
 	float duration = 0.f;
-	while (1 == window.isOpen())
+	while (window.isOpen() == 1)
 	{
 		setLagTime();
 
@@ -23,48 +23,38 @@ void Tetris::start() {
 		while (FRAME_DURATION <= lag)
 		{
 			lag -= FRAME_DURATION;
-
 			checkEvent();
 
-			//If the clear effect timer is 0
-			if (0 == clear_effect_timer)
+			if (is_viewed == 0 && clear_effect_timer == 0)
 			{
-				//If the game over is 0
-				if (0 == game_over)
+				//If the game is not over
+				if (game_over == 0 && is_started == 1)
 				{
-					//If the rotate pressed is 0 (Damn, I'm so good at commenting!)
-					if (0 == rotate_pressed)
+					if (rotate_pressed == 0)
 					{
-						if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+						if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
 						{
-							//Rotation key is pressed!
 							rotate_pressed = 1;
-
-							//Do a barrel roll
 							tetromino.rotate(1, matrix);
 						} 
-						else if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+						else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
 						{
 							rotate_pressed = 1;
-
 							tetromino.rotate(0, matrix);
 						}
 					}
 
-					if (0 == move_timer)
+					if (move_timer == 0)
 					{
-						if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 						{
 							//Reset the move timer
 							move_timer = 1;
-
-							//Move the tetromino to the left
 							tetromino.move_left(matrix);
 						}
-						else if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+						else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 						{
 							move_timer = 1;
-
 							tetromino.move_right(matrix);
 						}
 					}
@@ -75,29 +65,31 @@ void Tetris::start() {
 					}
 
 					//If hard drop is not pressed
-					if (0 == hard_drop_pressed)
+					if (hard_drop_pressed == 0)
 					{
-						//But the Space is pressed, which is the hard drop key (Paradox?)
-						if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 						{
-							//Get rid of the paradox!
 							hard_drop_pressed = 1;
 
 							//Reset the fall timer
 							fall_timer = current_fall_speed;
 
-							//Make the falling tetromino drop HAAAAARD!
-							tetromino.hard_drop(matrix);
+							//Score by distance to the bottom
+							int max_y = 0;
+							for (auto& mino : tetromino.get_minos()) {
+								if (max_y < mino.y) max_y = mino.y;
+							}
+							scores += (ROWS - max_y) * HARD_DROP_SCORE;
 
-							// play sound and glowing
+							tetromino.hard_drop(matrix);
 						}
 					}
 
-					if (0 == soft_drop_timer)
+					if (soft_drop_timer == 0)
 					{
-						if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 						{
-							if (1 == tetromino.move_down(matrix))
+							if (tetromino.move_down(matrix))
 							{
 								fall_timer = 0;
 								soft_drop_timer = 1;
@@ -107,66 +99,29 @@ void Tetris::start() {
 					else
 					{
 						soft_drop_timer = (1 + soft_drop_timer) % SOFT_DROP_SPEED;
+						scores += SOFT_DROP_SCORE;
 					}
 
 					//If the fall timer is over
 					if (current_fall_speed == fall_timer)
 					{
 						//If the tetromino can't move down anymore
-						if (0 == tetromino.move_down(matrix))
+						if (tetromino.move_down(matrix) == 0)
 						{
 							//Put the falling tetromino to the matrix
+							//play sound and glowing
 							tetromino.update_matrix(matrix);
 
-							//Loop through every row
-							for (unsigned int a = 0; a < ROWS; a++)
-							{
-								//Here we're gonna check if the current row should be cleared or not
-								bool clear_line = 1;
-
-								//Check if the every cell in the row is filled or not
-								for (unsigned int b = 0; b < COLUMNS; b++)
-								{
-									if (0 == matrix[b][a])
-									{
-										clear_line = 0;
-
-										break;
-									}
-								}
-
-								//If we have to clear it
-								if (1 == clear_line)
-								{
-									//WE CLEAR IT!
-									//First we increase the score
-									lines_cleared++;
-
-									//Then we start the effect timer
-									clear_effect_timer = CLEAR_EFFECT_DURATION;
-
-									//Set the current row as the row that should be cleared
-									clear_lines[a] = 1;
-
-									//If the player reached a certain number of lines
-									if (0 == lines_cleared % LINES_TO_INCREASE_SPEED)
-									{
-										//We increase the game speed
-										current_fall_speed = std::max<int>(1, current_fall_speed - 7);
-									}
-								}
-							}
+							//check any lines to clear
+							clearLines();
 
 							//If the effect timer is over
-							if (0 == clear_effect_timer)
-							{
-								//Decide if the game is over or not based on the return value of the reset function
-								game_over = 0 == tetromino.reset(next_shape, matrix, get_tetromino(next_shape, COLUMNS / 2, 1));
-
-								//Generate the next shape
-								next_shape = static_cast<unsigned int>(shape_distribution(random_engine));
-							}
+							if (clear_effect_timer == 0)
+								checkLost();
 						}
+						
+						scores += NORMAL_DROP_SCORE * 
+							static_cast<unsigned int>((START_FALL_SPEED / static_cast<float>(current_fall_speed)));
 
 						//Restart the fall timer
 						fall_timer = 0;
@@ -182,39 +137,39 @@ void Tetris::start() {
 				}
 
 				//This is the code for restarting the game
-				else if (1 == sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
+				else 
 				{
-					//We set everything to 0
-					game_over = 0;
-					hard_drop_pressed = 0;
-					rotate_pressed = 0;
-
-					lines_cleared = 0;
-
-					current_fall_speed = START_FALL_SPEED;
-					fall_timer = 0;
-					move_timer = 0;
-					soft_drop_timer = 0;
-
-					//Then we clear the matrix
-					for (auto& a : matrix)
-					{
-						std::fill(a.begin(), a.end(), 0);
+					if (game_over == 1 && sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
+						restart(duration);
+						is_started = 0;
+					}	
+					
+					// restart
+					else if (is_viewed == 0 && is_started == 0 && 
+						sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
+						is_started = 1;
+					}
+					
+					// view highscore when not playing
+					else if ((is_started == 0 || game_over == 1) 
+						&& sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {						
+						is_viewed = 1;
+						drawLeaderboard();
 					}
 				}
 			}
-			else
+			else if (is_viewed == 0)
 			{
 				//Decrement the effect timer
 				clear_effect_timer--;
 
-				if (0 == clear_effect_timer)
+				if (clear_effect_timer == 0)
 				{
 					//Loop through each row
 					for (unsigned int a = 0; a < ROWS; a++)
 					{
 						//If the row should be cleared
-						if (1 == clear_lines[a])
+						if (clear_lines[a])
 						{
 							//Loop through each cell in the row
 							for (unsigned int b = 0; b < COLUMNS; b++)
@@ -232,16 +187,39 @@ void Tetris::start() {
 						}
 					}
 
-					game_over = 0 == tetromino.reset(next_shape, matrix, get_tetromino(next_shape, COLUMNS / 2, 1));
-
-					next_shape = static_cast<unsigned int>(shape_distribution(random_engine));
+					checkLost();
 
 					//Clear the clear lines array
 					std::fill(clear_lines.begin(), clear_lines.end(), 0);
 				}
 			}
 
-			drawBoard(timer(duration, clock));
+			// ESCAPE
+			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+				// confirm
+				return;
+			}
+
+			// PAUSE game
+			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
+				is_viewed = 1;
+				drawPause();
+			}
+			
+			// show instruction when playing
+			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::I)) {
+				is_viewed = 1;
+				drawHelp();
+			}
+
+			// RESUME game
+			if (is_viewed == 1 && sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
+				is_viewed = 0;
+				clock.restart();
+			}
+
+			if (is_viewed == 0)
+				drawBoard(timer(duration, clock));
 		}
 	}
 
@@ -262,187 +240,136 @@ void Tetris::setLagTime() {
 
 void Tetris::checkEvent() {
 	//Looping through the events
-	while (1 == window.pollEvent(event))
+	while (window.pollEvent(event))
 	{
 		//Check the event type
 		switch (event.type)
 		{
-			//If the user closed the game
-		case sf::Event::Closed:
-		{
-			//Close the window
-			window.close();
-
-			break;
-		}
-		//If the key has been released
-		case sf::Event::KeyReleased:
-		{
-			//Check which key was released
-			switch (event.key.code)
+			case sf::Event::Closed:
 			{
-			case sf::Keyboard::C:
-			case sf::Keyboard::Z:
-			{
-				//Rotation key is not pressed anymore
-				rotate_pressed = 0;
-				is_rotated = 1;
+				//Close the window
+				window.close();
 
 				break;
 			}
-			case sf::Keyboard::Down:
+			//If the key has been released
+			case sf::Event::KeyReleased:
 			{
-				//Reset the soft drop timer
-				soft_drop_timer = 0;
+				//Check which key was released
+				switch (event.key.code) {
+					case sf::Keyboard::C:
+					case sf::Keyboard::Z:
+					{
+						//Rotation key is not pressed anymore
+						rotate_pressed = 0;
+						is_rotated = 1;
 
-				break;
-			}
-			case sf::Keyboard::Left:
-			case sf::Keyboard::Right:
-			{
-				//Reset the move timer
-				move_timer = 0;
+						break;
+					}
+					case sf::Keyboard::Down:
+					{
+						//Reset the soft drop timer
+						soft_drop_timer = 0;
 
-				break;
+						break;
+					}
+					case sf::Keyboard::Left:
+					case sf::Keyboard::Right:
+					{
+						//Reset the move timer
+						move_timer = 0;
+
+						break;
+					}
+					case sf::Keyboard::Space:
+					{
+						//Hard drop key is not pressed anymore
+						hard_drop_pressed = 0;
+					}
+				}
 			}
-			case sf::Keyboard::Space:
-			{
-				//Hard drop key is not pressed anymore
-				hard_drop_pressed = 0;
-			}
-			}
-		}
 		}
 	}
 }
 
-void Tetris::drawBoard(std::string timerString) {
-	//Here we're drawing everything!
-	if (FRAME_DURATION > lag)
+void Tetris::clearLines() {
+	int tetris_count = 0;
+	//Loop through every row
+	for (unsigned int a = 0; a < ROWS; a++)
 	{
-		//Calculating the size of the effect squares
-		float clear_cell_size =
-			(2 * round(0.5f * CELL_SIZE * (clear_effect_timer / static_cast<float>(CLEAR_EFFECT_DURATION))));
+		//Here we're gonna check if the current row should be cleared or not
+		bool clear_line = 1;
 
-		//We're gonna use this object to draw every cell in the game
-		sf::RectangleShape cell(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
-		//Next shape preview border (White square at the corner)
-		sf::RectangleShape preview_border(sf::Vector2f(5 * CELL_SIZE, 5 * CELL_SIZE));
-		preview_border.setFillColor(sf::Color(0, 0, 0));
-		preview_border.setOutlineThickness(-1);
-		preview_border.setPosition(CELL_SIZE * (1.5f * COLUMNS - 2.5f), CELL_SIZE * (0.25f * ROWS - 2.5f));
-
-		//Clear the window from the previous frame
-		window.clear();
-
-		//Draw the matrix
-		for (unsigned int a = 0; a < COLUMNS; a++)
+		//Check if the every cell in the row is filled or not
+		for (unsigned int b = 0; b < COLUMNS; b++)
 		{
-			for (unsigned int b = 0; b < ROWS; b++)
+			if (matrix[b][a] == 0)
 			{
-				if (0 == clear_lines[b])
-				{
-					cell.setPosition(static_cast<float>(CELL_SIZE * a), static_cast<float>(CELL_SIZE * b));
-
-					if (1 == game_over && 0 < matrix[a][b])
-					{
-						cell.setFillColor(cell_colors[8]);
-					}
-					else
-					{
-						cell.setFillColor(cell_colors[matrix[a][b]]);
-					}
-
-					window.draw(cell);
-				}
+				clear_line = 0;
+				break;
 			}
 		}
 
-		//If the game is not over
-		if (0 == game_over)
+		//If we have to clear it
+		if (clear_line == 1)
 		{
-			//Set the cell color to gray for ghost tetromino
-		    cell.setFillColor(cell_colors[8]);
+			//WE CLEAR IT!
+			//First we increase the score
+			lines_cleared++;
+			scores += CLEAR_LINE_SCORE;
+			tetris_count++;
 
-			//Drawing the ghost tetromino
-			for (Position& mino : tetromino.get_ghost_minos(matrix))
+			//Then we start the effect timer
+			clear_effect_timer = CLEAR_EFFECT_DURATION;
+
+			//Set the current row as the row that should be cleared
+			clear_lines[a] = 1;
+
+			//If the player reached a certain number of lines
+			if (lines_cleared % LINES_TO_INCREASE_SPEED == 0)
 			{
-				cell.setPosition(static_cast<float>(CELL_SIZE * mino.x), static_cast<float>(CELL_SIZE * mino.y));
-
-				window.draw(cell);
-			}
-
-			cell.setFillColor(cell_colors[static_cast<size_t>(1) + tetromino.get_shape()]);
-		}
-
-		//Drawing the falling tetromino
-		for (Position& mino : tetromino.get_minos())
-		{
-			cell.setPosition(static_cast<float>(CELL_SIZE * mino.x), static_cast<float>(CELL_SIZE * mino.y));
-
-			window.draw(cell);
-		}
-
-		//Drawing the effect
-		for (unsigned int a = 0; a < COLUMNS; a++)
-		{
-			for (unsigned int b = 0; b < ROWS; b++)
-			{
-				if (1 == clear_lines[b])
-				{
-					cell.setFillColor(cell_colors[0]);
-					cell.setPosition(static_cast<float>(CELL_SIZE * a), static_cast<float>(CELL_SIZE * b));
-					cell.setSize(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
-
-					window.draw(cell);
-
-					cell.setFillColor(sf::Color(255, 255, 255));
-					cell.setPosition(floor(CELL_SIZE * (0.5f + a) - 0.5f * clear_cell_size),
-						floor(CELL_SIZE * (0.5f + b) - 0.5f * clear_cell_size));
-					cell.setSize(sf::Vector2f(clear_cell_size, clear_cell_size));
-
-					window.draw(cell);
-				}
+				//We increase the game speed
+				current_fall_speed = std::max<int>(1, current_fall_speed - 7);
 			}
 		}
-
-		cell.setFillColor(cell_colors[1 + static_cast<size_t>(next_shape)]);
-		cell.setSize(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
-
-		//Draw the preview border
-		window.draw(preview_border);
-
-		//Draw the next tetromino
-		for (Position& mino : get_tetromino(next_shape,
-			static_cast<unsigned int>(1.5f * COLUMNS), static_cast<unsigned int>(0.25f * ROWS)))
-		{
-			//Shifting the tetromino to the center of the preview border
-			float next_tetromino_x = CELL_SIZE * mino.x;
-			float next_tetromino_y = CELL_SIZE * mino.y;
-
-			if (0 == next_shape)
-			{
-				next_tetromino_y += static_cast<unsigned int>(round(0.5f * CELL_SIZE));
-			}
-			else if (3 != next_shape)
-			{
-				next_tetromino_x -= static_cast<unsigned int>(round(0.5f * CELL_SIZE));
-			}
-
-			cell.setPosition(next_tetromino_x, next_tetromino_y);
-
-			window.draw(cell);
-		}
-
-		//Drawing the text
-		draw_text(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 5),
-			static_cast<unsigned int>(0.5f * CELL_SIZE * ROWS),
-			"Lines:" + std::to_string(lines_cleared) +
-			"\nSpeed:" + std::to_string(START_FALL_SPEED / static_cast<float>(current_fall_speed)) + 'x' +
-			"\nTime elapsed: " + timerString, window);
-		window.display();
-
 	}
+	if (tetris_count >= 4) {
+		scores += TETRIS_BONUS_SCORE;
+		if (tetris_count > 4)
+			scores += (tetris_count - 4) * CLEAR_LINE_SCORE;
+	}	
+}
+
+void Tetris::checkLost() {
+	//Decide if the game is over or not based on the return value of the reset function
+	game_over = tetromino.reset(next_shape, matrix, get_tetromino(next_shape, COLUMNS / 2, 1)) == 0;
+
+	//Generate the next shape
+	next_shape = shape_distribution(random_engine);
+
+	if (game_over == 1) {
+		scores += std::max<int>((lines_cleared - LINE_BONUS) * LINE_BONUS_SCORE, 0);
+	}
+}
+
+void Tetris::restart(float& duration) {
+	//We set everything to 0
+	game_over = 0;
+	hard_drop_pressed = 0;
+	rotate_pressed = 0;
+
+	lines_cleared = 0;
+	scores = 0;
+
+	current_fall_speed = START_FALL_SPEED;
+	fall_timer = 0;
+	move_timer = 0;
+	soft_drop_timer = 0;
+	duration = 0;
+
+	//Then we clear the matrix
+	for (auto& a : matrix)
+		std::fill(a.begin(), a.end(), 0);
 }
 
 std::string Tetris::timer(float& duration, sf::Clock& clock) {
@@ -454,7 +381,8 @@ std::string Tetris::timer(float& duration, sf::Clock& clock) {
 	sf::String stringSeconds, stringMinutes, stringHours;
 	sf::String timerString;
 
-	duration += time.asSeconds();
+	if (is_started == 1 && game_over == 0)
+		duration += time.asSeconds();
 	fMilliseconds = std::modf(duration, &fSeconds);
 
 	intSeconds = static_cast<int>(fSeconds);
@@ -486,6 +414,87 @@ std::string Tetris::timer(float& duration, sf::Clock& clock) {
 		stringHours = "0" + stringHours;
 	}
 
-	timerString = stringHours + ":" + stringMinutes + ":" + stringSeconds/* + ":" + stringMilliseconds*/;
+	timerString = stringHours + ":" + stringMinutes + ":" + 
+		stringSeconds/* + ":" + stringMilliseconds*/;
 	return timerString;
+}
+
+std::vector<Position> Tetris::get_tetromino(unsigned char i_shape, unsigned char i_x, unsigned char i_y) {
+	std::vector<Position> new_tetromino(4);
+
+	//We just set the relative position for every mino
+	switch (i_shape)
+	{
+	case 0: // I shape
+	{
+		new_tetromino[0] = { 1, -1 };
+		new_tetromino[1] = { 0, -1 };
+		new_tetromino[2] = { -1, -1 };
+		new_tetromino[3] = { -2, -1 };
+
+		break;
+	}
+	case 1: // L shape
+	{
+		new_tetromino[0] = { 0, 0 };
+		new_tetromino[1] = { 1, 0 };
+		new_tetromino[2] = { -1, -1 };
+		new_tetromino[3] = { -1, 0 };
+
+		break;
+	}
+	case 2: // J shape
+	{
+		new_tetromino[0] = { 0, 0 };
+		new_tetromino[1] = { 1, 0 };
+		new_tetromino[2] = { 1, -1 };
+		new_tetromino[3] = { -1, 0 };
+
+		break;
+	}
+	case 3: // O shape
+	{
+		new_tetromino[0] = { 0, 0 };
+		new_tetromino[1] = { 0, -1 };
+		new_tetromino[2] = { -1, -1 };
+		new_tetromino[3] = { -1, 0 };
+
+		break;
+	}
+	case 4: // Z shape
+	{
+		new_tetromino[0] = { 0, 0 };
+		new_tetromino[1] = { 1, -1 };
+		new_tetromino[2] = { 0, -1 };
+		new_tetromino[3] = { -1, 0 };
+
+		break;
+	}
+	case 5: // T shape
+	{
+		new_tetromino[0] = { 0, 0 };
+		new_tetromino[1] = { 1, 0 };
+		new_tetromino[2] = { 0, -1 };
+		new_tetromino[3] = { -1, 0 };
+
+		break;
+	}
+	case 6: // S shape
+	{
+		new_tetromino[0] = { 0, 0 };
+		new_tetromino[1] = { 1, 0 };
+		new_tetromino[2] = { 0, -1 };
+		new_tetromino[3] = { -1, -1 };
+	}
+	}
+
+	//Then we add the given x and y to the minos
+	for (Position& mino : new_tetromino)
+	{
+		mino.x += i_x;
+		mino.y += i_y;
+	}
+
+	//Return the tetromino
+	return new_tetromino;
 }

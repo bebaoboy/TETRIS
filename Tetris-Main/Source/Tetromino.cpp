@@ -2,8 +2,8 @@
 #include <utility>
 
 #include "Headers/Global.hpp"
-#include "Headers/GetWallKickData.hpp"
 #include "Headers/Tetromino.hpp"
+#include "Headers/CheckWallKick.hpp"
 
 Tetromino::Tetromino(unsigned int i_shape, std::vector<Position> mino) :
 	shape{ i_shape },
@@ -122,14 +122,14 @@ void Tetromino::move_right(const MainMatrix& i_matrix)
 void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 {
 	//I don't even wanna explain this. I spent way too much time writing this
-	if (3 != shape)
+	if (shape != 3)
 	{
 		unsigned int next_rotation;
 
 		std::vector<Position> current_minos = minos;
 
 		//Calculating the next rotation state
-		if (0 == i_clockwise)
+		if (i_clockwise == 0)
 		{
 			next_rotation = (3 + rotation) % 4;
 		}
@@ -139,7 +139,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 		}
 
 		//If it's the I shape
-		if (0 == shape)
+		if (shape == 0)
 		{
 			//We find it's center
 			float center_x = 0.5f * (minos[1].x + minos[2].x);
@@ -178,7 +178,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 				float x = mino.x - center_x;
 				float y = mino.y - center_y;
 
-				if (0 == i_clockwise)
+				if (i_clockwise == 0)
 				{
 					mino.x = static_cast<char>(center_x + y);
 					mino.y = static_cast<char>(center_y - x);
@@ -199,7 +199,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 				char x = minos[a].x - minos[0].x;
 				char y = minos[a].y - minos[0].y;
 
-				if (0 == i_clockwise)
+				if (i_clockwise == 0)
 				{
 					minos[a].x = y + minos[0].x;
 					minos[a].y = minos[0].y - x;
@@ -213,7 +213,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 		}
 
 		//We try every vector from the wall kick data
-		for (Position& wall_kick : get_wall_kick_data(0 == shape, rotation, next_rotation))
+		for (Position& wall_kick : checkWallKick(shape == 0, rotation, next_rotation))
 		{
 			bool can_turn = 1;
 
@@ -240,7 +240,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 			}
 
 			//If we can turn
-			if (1 == can_turn)
+			if (can_turn)
 			{
 				//We turn
 				rotation = next_rotation;
@@ -283,7 +283,7 @@ std::vector<Position> Tetromino::get_ghost_minos(const MainMatrix& i_matrix)
 
 	std::vector<Position> ghost_minos = minos;
 
-	while (1 == keep_falling)
+	while (keep_falling)
 	{
 		total_movement++;
 

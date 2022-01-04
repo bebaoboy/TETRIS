@@ -150,10 +150,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Tetris-Main\Source\Headers\DrawText.hpp" />
     <ClInclude Include="Tetris-Main\Source\Headers\Game.hpp" />
-    <ClInclude Include="Tetris-Main\Source\Headers\GetTetromino.hpp" />
-    <ClInclude Include="Tetris-Main\Source\Headers\GetWallKickData.hpp" />
+    <ClInclude Include="Tetris-Main\Source\Headers\CheckWallKick.hpp" />
     <ClInclude Include="Tetris-Main\Source\Headers\Global.hpp" />
     <ClInclude Include="Tetris-Main\Source\Headers\Tetromino.hpp" />
   </ItemGroup>
@@ -161,10 +159,9 @@
     <Image Include="Tetris-Main\Source\Resources\Images\Font.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tetris-Main\Source\DrawText.cpp" />
+    <ClCompile Include="Tetris-Main\Source\GameUI.cpp" />
     <ClCompile Include="Tetris-Main\Source\Game.cpp" />
-    <ClCompile Include="Tetris-Main\Source\GetTetromino.cpp" />
-    <ClCompile Include="Tetris-Main\Source\GetWallKickData.cpp" />
+    <ClCompile Include="Tetris-Main\Source\CheckWallKick.cpp" />
     <ClCompile Include="Tetris-Main\Source\Main.cpp" />
     <ClCompile Include="Tetris-Main\Source\Tetromino.cpp" />
   </ItemGroup>
