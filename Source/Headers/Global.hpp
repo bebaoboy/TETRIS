@@ -4,24 +4,22 @@
 
 //The size of the cell
 constexpr float CELL_SIZE = 8.0;
-//Number of columns
 constexpr unsigned int COLUMNS = 10;
-//I feel like my explanations are just longer versions of the names
 constexpr unsigned int ROWS = 20;
 //Screen resize
 constexpr unsigned int SCREEN_RESIZE = 4;
 
 //Lines needed to increase the game speed
-constexpr unsigned int LINES_TO_INCREASE_SPEED = 1;
-//The movement speed
+constexpr unsigned int LINES_TO_INCREASE_SPEED = 4;
+constexpr unsigned int SCORES_TO_INCREASE_SPEED = 6000;
 constexpr unsigned int MOVE_SPEED = 4;
-//Soft drop speed
 constexpr unsigned int SOFT_DROP_SPEED = 4;
 //Fall speed at the start of the game. Lower the value, faster the falling
 constexpr unsigned int START_FALL_SPEED = 60;
+constexpr unsigned int MIN_SPEED = 5;
 
 //The duration of the line clearing effect
-constexpr unsigned int CLEAR_EFFECT_DURATION = 8;
+constexpr unsigned int CLEAR_EFFECT_DURATION = 28;
 //Delay when rotate
 constexpr unsigned int ROTATE_LAG = 500;
 //The duration of every frame

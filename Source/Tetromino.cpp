@@ -4,11 +4,11 @@
 #include "Headers/Tetromino.hpp"
 #include "Headers/CheckWallKick.hpp"
 
-Tetromino::Tetromino(unsigned int i_shape, std::vector<Position> mino) :
-	shape{ i_shape },
+Tetromino::Tetromino(unsigned int shape, std::vector<Position> mino) :
+	shape{ shape },
 	minos{ std::move(mino) } {}
 
-bool Tetromino::move_down(const MainMatrix& i_matrix)
+bool Tetromino::moveDown(const MainMatrix& matrix)
 {
 	for (Position& mino : minos)
 	{
@@ -19,7 +19,7 @@ bool Tetromino::move_down(const MainMatrix& i_matrix)
 		}
 
 		//Will we hit another tetromino if we move down?
-		if (0 < i_matrix[mino.x][static_cast<std::vector<int>::size_type>(1) + mino.y])
+		if (0 < matrix[mino.x][static_cast<std::vector<int>::size_type>(1) + mino.y])
 		{
 			return 0;
 		}
@@ -35,92 +35,47 @@ bool Tetromino::move_down(const MainMatrix& i_matrix)
 	return 1;
 }
 
-bool Tetromino::reset(unsigned int i_shape, const MainMatrix& i_matrix, std::vector<Position> mino)
+void Tetromino::hardDrop(const MainMatrix& matrix)
 {
-	//Reset the variables
-	rotation = 0;
-	shape = i_shape;
-
-	minos = std::move(mino);
-
-	for (Position& mino : minos)
-	{
-		if (0 < i_matrix[mino.x][mino.y])
-		{
-			//Return that we can't reset because there's a tetromino at the spawn location
-			return 0;
-		}
-	}
-
-	//Return that everything is fine
-	return 1;
+	minos = getGhostMino(matrix);
 }
 
-unsigned int Tetromino::get_shape()
-{
-	//I'm gonna take a wild guess and say that this return the shape of the tetromino
-	return shape;
-}
-
-void Tetromino::hard_drop(const MainMatrix& i_matrix)
-{
-	//I'm so smart. I used the ghost tetromino function to make the hard drop function
-	minos = get_ghost_minos(i_matrix);
-}
-
-void Tetromino::move_left(const MainMatrix& i_matrix)
+void Tetromino::moveLeft(const MainMatrix& matrix)
 {
 	for (Position& mino : minos)
 	{
-		if (0 > mino.x - 1)
-		{
+		if (mino.x - 1 < 0)
 			return;
-		}
 
-		if (0 > mino.y)
-		{
+		if (mino.y < 0)
 			continue;
-		}
-		else if (0 < i_matrix[static_cast<size_t>(mino.x) - 1][mino.y])
-		{
+		else if (matrix[static_cast<size_t>(mino.x) - 1][mino.y] > 0)
 			return;
-		}
 	}
 
 	for (Position& mino : minos)
-	{
 		mino.x--;
-	}
 }
 
-void Tetromino::move_right(const MainMatrix& i_matrix)
+void Tetromino::moveRight(const MainMatrix& matrix)
 {
 	for (Position& mino : minos)
 	{
 		if (COLUMNS == 1 + mino.x)
-		{
 			return;
-		}
 
-		if (0 > mino.y)
-		{
+		if (mino.y < 0)
 			continue;
-		}
-		else if (0 < i_matrix[static_cast<size_t>(1) + mino.x][mino.y])
-		{
+		else if (matrix[static_cast<size_t>(1) + mino.x][mino.y] > 0)
 			return;
-		}
 	}
 
 	for (Position& mino : minos)
-	{
 		mino.x++;
-	}
 }
 
-void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
+void Tetromino::rotate(bool clockwise, const MainMatrix& matrix)
 {
-	//I don't even wanna explain this. I spent way too much time writing this
 	if (shape != 3)
 	{
 		unsigned int next_rotation;
@@ -128,7 +83,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 		std::vector<Position> current_minos = minos;
 
 		//Calculating the next rotation state
-		if (i_clockwise == 0)
+		if (clockwise == 0)
 		{
 			next_rotation = (3 + rotation) % 4;
 		}
@@ -177,7 +132,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 				float x = mino.x - center_x;
 				float y = mino.y - center_y;
 
-				if (i_clockwise == 0)
+				if (clockwise == 0)
 				{
 					mino.x = static_cast<char>(center_x + y);
 					mino.y = static_cast<char>(center_y - x);
@@ -198,7 +153,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 				char x = minos[a].x - minos[0].x;
 				char y = minos[a].y - minos[0].y;
 
-				if (i_clockwise == 0)
+				if (clockwise == 0)
 				{
 					minos[a].x = y + minos[0].x;
 					minos[a].y = minos[0].y - x;
@@ -230,7 +185,7 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 				{
 					continue;
 				}
-				else if (0 < i_matrix[static_cast<size_t>(mino.x) + wall_kick.x][static_cast<size_t>(mino.y) + wall_kick.y])
+				else if (0 < matrix[static_cast<size_t>(mino.x) + wall_kick.x][static_cast<size_t>(mino.y) + wall_kick.y])
 				{
 					can_turn = 0;
 
@@ -259,21 +214,19 @@ void Tetromino::rotate(bool i_clockwise, const MainMatrix& i_matrix)
 	}
 }
 
-void Tetromino::update_matrix(MainMatrix& i_matrix)
+void Tetromino::updateToMatrix(MainMatrix& matrix)
 {
 	//Putting the tetromino to the matrix
 	for (Position& mino : minos)
 	{
-		if (0 > mino.y)
-		{
+		if (mino.y < 0)
 			continue;
-		}
 
-		i_matrix[mino.x][mino.y] = 1 + shape;
+		matrix[mino.x][mino.y] = 1 + shape;
 	}
 }
 
-std::vector<Position> Tetromino::get_ghost_minos(const MainMatrix& i_matrix)
+std::vector<Position> Tetromino::getGhostMino(const MainMatrix& matrix)
 {
 	//We're just moving the tetromino down until it hits something. Then we're returning it's position
 	bool keep_falling = 1;
@@ -291,7 +244,6 @@ std::vector<Position> Tetromino::get_ghost_minos(const MainMatrix& i_matrix)
 			if (ROWS == total_movement + mino.y)
 			{
 				keep_falling = 0;
-
 				break;
 			}
 
@@ -299,10 +251,9 @@ std::vector<Position> Tetromino::get_ghost_minos(const MainMatrix& i_matrix)
 			{
 				continue;
 			}
-			else if (0 < i_matrix[mino.x][static_cast<size_t>(total_movement) + mino.y])
+			else if (0 < matrix[mino.x][static_cast<size_t>(total_movement) + mino.y])
 			{
 				keep_falling = 0;
-
 				break;
 			}
 		}
@@ -316,7 +267,32 @@ std::vector<Position> Tetromino::get_ghost_minos(const MainMatrix& i_matrix)
 	return ghost_minos;
 }
 
-std::vector<Position> Tetromino::get_minos()
+std::vector<Position> Tetromino::getMino()
 {
 	return minos;
+}
+
+bool Tetromino::reset(unsigned int shape, const MainMatrix& matrix, std::vector<Position> mino) {
+	//Reset the variables
+	rotation = 0;
+	shape = shape;
+
+	minos = std::move(mino);
+
+	for (Position& mino : minos)
+	{
+		if (matrix[mino.x][mino.y] > 0)
+		{
+			//Return that we can't reset because there's a tetromino at the spawn location
+			return 0;
+		}
+	}
+
+	//Return that everything is fine
+	return 1;
+}
+
+unsigned int Tetromino::getShapeCode() {
+	//I'm gonna take a wild guess and say that this return the shape of the tetromino
+	return shape;
 }

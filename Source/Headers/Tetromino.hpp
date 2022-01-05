@@ -8,22 +8,22 @@ class Tetromino
 
 	std::vector<Position> minos;
 public:
-	Tetromino(unsigned int i_shape, std::vector<Position> mino);
+	Tetromino(unsigned int shape, std::vector<Position> mino);
 
-	bool move_down(const MainMatrix& i_matrix);
-	bool reset(unsigned int i_shape, const MainMatrix& i_matrix, std::vector<Position> mino);
+	bool moveDown(const MainMatrix& matrix);
+	bool reset(unsigned int shape, const MainMatrix& matrix, std::vector<Position> mino);
 
-	unsigned int get_shape(); 
+	unsigned int getShapeCode(); 
 
-	void hard_drop(const MainMatrix& i_matrix);
-	void move_left(const MainMatrix& i_matrix);
-	void move_right(const MainMatrix& i_matrix);
+	void hardDrop(const MainMatrix& matrix);
+	void moveLeft(const MainMatrix& matrix);
+	void moveRight(const MainMatrix& matrix);
 
-	void update_matrix(MainMatrix& i_matrix);
+	void updateToMatrix(MainMatrix& matrix);
 
-	std::vector<Position> get_ghost_minos(const MainMatrix& i_matrix);
-	std::vector<Position> get_minos();
+	std::vector<Position> getGhostMino(const MainMatrix& matrix);
+	std::vector<Position> getMino();
 
-	virtual void rotate(bool i_clockwise, const MainMatrix& i_matrix);
+	virtual void rotate(bool i_clockwise, const MainMatrix& matrix);
 
 };

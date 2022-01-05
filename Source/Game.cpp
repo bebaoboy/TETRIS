@@ -12,7 +12,7 @@ Tetris::Tetris() {
 
 	rotate_sound.loadFromFile("Source/Resources/Sounds/rotate.wav");
 	normal_drop_sound.loadFromFile("Source/Resources/Sounds/selection.wav");
-	hard_drop_sound.loadFromFile("Source/Resources/Sounds/fall2.wav");
+	hardDrop_sound.loadFromFile("Source/Resources/Sounds/fall2.wav");
 	line_clear_sound.loadFromFile("Source/Resources/Sounds/line.wav");
 	lost_sound.loadFromFile("Source/Resources/Sounds/gameover.wav");
 	opening_sound.loadFromFile("Source/Resources/Sounds/success.wav");
@@ -66,12 +66,12 @@ void Tetris::start() {
 						{
 							//Reset the move timer
 							move_timer = 1;
-							tetromino.move_left(matrix);
+							tetromino.moveLeft(matrix);
 						}
 						else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 						{
 							move_timer = 1;
-							tetromino.move_right(matrix);
+							tetromino.moveRight(matrix);
 						}
 					}
 					else
@@ -81,26 +81,26 @@ void Tetris::start() {
 					}
 
 					//If hard drop is not pressed
-					if (hard_drop_pressed == 0)
+					if (hardDrop_pressed == 0)
 					{
 						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 						{
-							hard_drop_pressed = 1;
+							hardDrop_pressed = 1;
 
 							//Reset the fall timer
 							fall_timer = current_fall_speed;
 
 							//Score by distance to the bottom
 							int max_y = 0;
-							for (auto& mino : tetromino.get_minos()) {
+							for (auto& mino : tetromino.getMino()) {
 								if (max_y < mino.y) max_y = mino.y;
 							}
 							scores += (ROWS - max_y) * HARD_DROP_SCORE;
 
-							player.setBuffer(hard_drop_sound);
+							player.setBuffer(hardDrop_sound);
 							player.play();
 
-							tetromino.hard_drop(matrix);
+							tetromino.hardDrop(matrix);
 						}
 					}
 
@@ -108,7 +108,7 @@ void Tetris::start() {
 					{
 						if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 						{
-							if (tetromino.move_down(matrix))
+							if (tetromino.moveDown(matrix))
 							{
 								fall_timer = 0;
 								soft_drop_timer = 1;
@@ -125,14 +125,22 @@ void Tetris::start() {
 					if (current_fall_speed == fall_timer)
 					{
 						//If the tetromino can't move down anymore
-						if (tetromino.move_down(matrix) == 0)
+						if (tetromino.moveDown(matrix) == 0)
 						{
 							//Put the falling tetromino to the matrix
 							//play sound and glowing
-							tetromino.update_matrix(matrix);
+							tetromino.updateToMatrix(matrix);
 							
 							//check any lines to clear
 							clearLines();
+
+							//If the player reached a certain number of score
+							if (scores % peak_score >= 0)
+							{
+								//We increase the game speed
+								setGameSpeed(2);
+								peak_score *= 2;
+							}
 
 							//If the effect timer is over
 							if (clear_effect_timer == 0) 
@@ -158,16 +166,9 @@ void Tetris::start() {
 				//This is the code for restarting the game
 				else 
 				{
-					if (game_over == 1 && sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
-						restart(duration);
-						is_started = 0;
 
-						player.setBuffer(opening_sound);
-						player.play();
-					}	
-					
-					// restart
-					else if (is_viewed == 0 && is_started == 0 && 
+					// replay
+					if (is_viewed == 0 && is_started == 0 && 
 						sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
 						is_started = 1;
 					}
@@ -200,13 +201,18 @@ void Tetris::start() {
 								matrix[b][a] = 0;
 
 								//Swap the row with the rows above
-								for (std::vector<int>::size_type c = a; 0 < c; c--)
+								for (size_t c = a; c > 0; c--)
 								{
 									matrix[b][c] = matrix[b][c - 1];
 									matrix[b][c - 1] = 0;
 								}
-							}
+							}							
 						}
+					}
+
+					// Gravity mode
+					if (is_gravity == 1) {
+						gravityFalls();
 					}
 
 					checkLost();
@@ -214,6 +220,26 @@ void Tetris::start() {
 					//Clear the clear lines array
 					std::fill(clear_lines.begin(), clear_lines.end(), 0);
 				}
+			}
+
+			// Replay anytime
+			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
+				restart(duration);
+				is_started = 0;
+				is_gravity = 0;
+
+				player.setBuffer(opening_sound);
+				player.play();
+			}
+
+			// Activate gravity mode
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
+				is_gravity = 1;
+			}
+
+			if (is_viewed == 1 && is_gravity == 1
+				&& sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
+				is_gravity = 0;
 			}
 
 			// ESCAPE
@@ -306,7 +332,7 @@ void Tetris::checkEvent() {
 					case sf::Keyboard::Space:
 					{
 						//Hard drop key is not pressed anymore
-						hard_drop_pressed = 0;
+						hardDrop_pressed = 0;
 					}
 				}
 			}
@@ -351,7 +377,7 @@ void Tetris::clearLines() {
 			if (lines_cleared % LINES_TO_INCREASE_SPEED == 0)
 			{
 				//We increase the game speed
-				current_fall_speed = std::max<int>(1, current_fall_speed - 7);
+				setGameSpeed(5);
 			}
 		}
 	}
@@ -374,7 +400,7 @@ void Tetris::checkLost() {
 		player.setBuffer(lost_sound);
 		player.play();
 
-		tetromino.hard_drop(matrix);
+		tetromino.hardDrop(matrix);
 		scores += std::max<int>((lines_cleared - LINE_BONUS) * LINE_BONUS_SCORE, 0);
 
 		score_list.emplace_back(getTime(),scores);
@@ -384,7 +410,7 @@ void Tetris::checkLost() {
 void Tetris::restart(float& duration) {
 	//We set everything to 0
 	game_over = 0;
-	hard_drop_pressed = 0;
+	hardDrop_pressed = 0;
 	rotate_pressed = 0;
 
 	lines_cleared = 0;
@@ -535,4 +561,37 @@ std::string Tetris::getTime() {
 	char buffer[100];
 	std::strftime(buffer, 32, "%Y-%m-%d %H:%M:%S", &time_info);
 	return buffer;
+}
+
+void Tetris::gravityFalls() {
+	for (int a = static_cast<int>(ROWS) - 1; a >= 0; a--) {
+		if (clear_lines[a]) {
+			size_t c;
+			for (unsigned int b = 0; b < COLUMNS; b++) {
+				c = a;
+				while (c > 0) {
+					size_t d = c - 1;
+					while (d > 0 && matrix[b][d] == 0) {
+						d--;
+					}
+					if (matrix[b][c] != 0)
+						std::swap(matrix[b][c - 1], matrix[b][d]);
+					else
+						std::swap(matrix[b][c], matrix[b][d]);
+					drawMatrix(true);
+					window.display();
+					for (int i = 0; i < 30000; ++i) {
+						int j = 1;
+						j = j++ * i - i / 2 + i;
+						++j;
+					}
+					c--;
+				}
+			}
+		}
+	}
+}
+
+void Tetris::setGameSpeed(unsigned int i) {
+	current_fall_speed = std::max<int>(MIN_SPEED, current_fall_speed - i);
 }

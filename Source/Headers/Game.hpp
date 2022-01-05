@@ -12,10 +12,12 @@ class Tetris
 	bool is_started = 0;
 	bool is_viewed = 0;
 	//Is the hard drop button pressed?
-	bool hard_drop_pressed = 0;
+	bool hardDrop_pressed = 0;
 	//Is the rotate button pressed?
 	bool rotate_pressed = 0;
 	int is_rotated = 0;
+
+	bool is_gravity = 0;
 
 	//Used to make the game framerate-independent
 	unsigned int lag = 0;
@@ -37,6 +39,7 @@ class Tetris
 	
 	// Scoring
 	unsigned long scores = 0;
+	unsigned long peak_score = SCORES_TO_INCREASE_SPEED;
 	std::vector<std::pair< std::string, unsigned long>> score_list;
 
 	//Similar to lag, used to make the game framerate-independent
@@ -50,6 +53,9 @@ class Tetris
 
 	//Stores the current state of each row. Whether they need to be cleared or not
 	std::vector<bool> clear_lines = std::vector<bool>(ROWS, 0);
+
+	//We're gonna use this object to draw every cell in the game
+	sf::RectangleShape cell{ sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1) };
 
 	//All the colors for the cells
 	std::vector<sf::Color> cell_colors = {
@@ -71,7 +77,7 @@ class Tetris
 	sf::Sound player;
 
 	sf::SoundBuffer opening_sound;
-	sf::SoundBuffer hard_drop_sound, normal_drop_sound;
+	sf::SoundBuffer hardDrop_sound, normal_drop_sound;
 	sf::SoundBuffer lost_sound;
 	sf::SoundBuffer line_clear_sound;
 	sf::SoundBuffer rotate_sound;
@@ -99,14 +105,16 @@ private:
 	std::string timer(float& duration, sf::Clock& clock);
 	std::vector<Position> get_tetromino(unsigned char i_shape, unsigned char i_x, unsigned char i_y);
 	std::string getTime();
+	void gravityFalls();
+	void setGameSpeed(unsigned int i);
 
 	void drawText(float i_x, float i_y, const std::string& i_text, sf::RenderWindow& i_window, float scale = 1.f);
 	void drawBoard(std::string timerString);
 	void drawBorder();
-	void drawGhost(sf::RectangleShape& cell);
-	void drawNext(sf::RectangleShape& cell);
-	void drawMatrix(sf::RectangleShape& cell);
-	void drawEffect(sf::RectangleShape& cell);
+	void drawGhost();
+	void drawNext();
+	void drawMatrix(bool is_gravity = false);
+	void drawEffect();
 	void drawPause();
 	void drawHelp();
 	void drawLeaderboard();

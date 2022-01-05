@@ -55,7 +55,12 @@ void Tetris::drawBorder() {
 	window.draw(preview_border);
 
 	if (is_started == 1 && game_over == 0)
-		drawText(top_x + 5, top_y - 7, "Up next:", window, .4f);
+		drawText(top_x + 6, top_y - 7, "Up next:", window, .4f);
+
+	if (is_gravity)
+		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "Gravity: on", window, .35f);
+	else 
+		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "Gravity: off", window, .35f);
 }
 
 void Tetris::drawBoard(std::string timerString) {
@@ -69,12 +74,10 @@ void Tetris::drawBoard(std::string timerString) {
 		//Draw the preview border
 		drawBorder();
 
-		//We're gonna use this object to draw every cell in the game
-		sf::RectangleShape cell(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
-
 		//Draw the matrix
-		drawMatrix(cell);
+		drawMatrix();
 
+		// Draw enter to play
 		if (is_started == 0) {
 			sf::RectangleShape box(sf::Vector2f(75, 11));
 			box.setFillColor(sf::Color(0, 0, 0, 70));
@@ -86,10 +89,10 @@ void Tetris::drawBoard(std::string timerString) {
 
 		// Draw ghost tetromino
 		if (game_over == 0 && is_started == 1) {
-			drawGhost(cell);
+			drawGhost();
 
 			//Drawing the falling tetromino
-			for (Position& mino : tetromino.get_minos())
+			for (Position& mino : tetromino.getMino())
 			{
 				cell.setPosition(static_cast<float>(CELL_SIZE * mino.x),
 					static_cast<float>(CELL_SIZE * mino.y));
@@ -98,14 +101,15 @@ void Tetris::drawBoard(std::string timerString) {
 		}
 
 		//Drawing the effect
-		drawEffect(cell);
+		drawEffect();
 
 		//Draw the next tetromino
 		if (game_over == 0 && 1 == is_started) {
-			drawNext(cell);
+			drawNext();
 		}
+
+		//Drawing the text
 		if (is_started == 1 || game_over == 1) {
-			//Drawing the text
 			drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 10),
 				static_cast<unsigned int>(0.45f * CELL_SIZE * ROWS),
 				"Lines:" + std::to_string(lines_cleared) +
@@ -147,7 +151,7 @@ void Tetris::drawBoard(std::string timerString) {
 	}
 }
 
-void Tetris::drawGhost(sf::RectangleShape& cell) {
+void Tetris::drawGhost() {
 	//If the game is not over, draw ghost tetromino
 	if (game_over == 0)
 	{
@@ -155,18 +159,18 @@ void Tetris::drawGhost(sf::RectangleShape& cell) {
 		cell.setFillColor(cell_colors[8]);
 
 		//Drawing the ghost tetromino
-		for (Position& mino : tetromino.get_ghost_minos(matrix))
+		for (Position& mino : tetromino.getGhostMino(matrix))
 		{
 			cell.setPosition(static_cast<float>(CELL_SIZE * mino.x), static_cast<float>(CELL_SIZE * mino.y));
 			window.draw(cell);
 		}
 
-		cell.setFillColor(cell_colors[static_cast<size_t>(1) + tetromino.get_shape()]);
+		cell.setFillColor(cell_colors[static_cast<size_t>(1) + tetromino.getShapeCode()]);
 	}
 
 }
 
-void Tetris::drawNext(sf::RectangleShape& cell) {
+void Tetris::drawNext() {
 	//Draw the next tetromino
 	cell.setFillColor(cell_colors[1 + static_cast<size_t>(next_shape)]);
 	if (game_over != 0)
@@ -190,13 +194,13 @@ void Tetris::drawNext(sf::RectangleShape& cell) {
 	}
 }
 
-void Tetris::drawMatrix(sf::RectangleShape& cell) {
+void Tetris::drawMatrix(bool is_gravity) {
 	//Draw the matrix
 	for (unsigned int a = 0; a < COLUMNS; a++)
 	{
 		for (unsigned int b = 0; b < ROWS; b++)
 		{
-			if (clear_lines[b] == 0)
+			if (clear_lines[b] == 0 || is_gravity == 1)
 			{
 				cell.setPosition(static_cast<float>(CELL_SIZE * a),
 					static_cast<float>(CELL_SIZE * b));
@@ -212,7 +216,7 @@ void Tetris::drawMatrix(sf::RectangleShape& cell) {
 	}
 }
 
-void Tetris::drawEffect(sf::RectangleShape& cell) {
+void Tetris::drawEffect() {
 	//Calculating the size of the effect squares
 	float clear_cell_size =
 		(2 * round(0.5f * CELL_SIZE * (clear_effect_timer / static_cast<float>(CLEAR_EFFECT_DURATION))));
@@ -238,7 +242,7 @@ void Tetris::drawEffect(sf::RectangleShape& cell) {
 				player.setBuffer(line_clear_sound);
 				player.play();
 
-				tetromino.hard_drop(matrix);
+				tetromino.hardDrop(matrix);
 			}
 		}
 	}
