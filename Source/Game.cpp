@@ -135,10 +135,10 @@ void Tetris::start() {
 							clearLines();
 
 							//If the player reached a certain number of score
-							if (scores % peak_score >= 0)
+							if (scores / peak_score > 0)
 							{
 								//We increase the game speed
-								setGameSpeed(2);
+								setGameSpeed(1);
 								peak_score *= 2;
 							}
 

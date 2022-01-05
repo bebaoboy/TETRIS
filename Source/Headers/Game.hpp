@@ -103,12 +103,12 @@ private:
 	void checkLost();
 	void restart(float& duration);
 	std::string timer(float& duration, sf::Clock& clock);
-	std::vector<Position> get_tetromino(unsigned char i_shape, unsigned char i_x, unsigned char i_y);
+	std::vector<Position> get_tetromino(unsigned char shape, unsigned char i_x, unsigned char i_y);
 	std::string getTime();
 	void gravityFalls();
 	void setGameSpeed(unsigned int i);
 
-	void drawText(float i_x, float i_y, const std::string& i_text, sf::RenderWindow& i_window, float scale = 1.f);
+	void drawText(float i_x, float i_y, const std::string& text, sf::RenderWindow& window, float scale = 1.f);
 	void drawBoard(std::string timerString);
 	void drawBorder();
 	void drawGhost();

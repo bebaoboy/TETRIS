@@ -11,7 +11,7 @@ constexpr unsigned int SCREEN_RESIZE = 4;
 
 //Lines needed to increase the game speed
 constexpr unsigned int LINES_TO_INCREASE_SPEED = 4;
-constexpr unsigned int SCORES_TO_INCREASE_SPEED = 6000;
+constexpr unsigned int SCORES_TO_INCREASE_SPEED = 15000;
 constexpr unsigned int MOVE_SPEED = 4;
 constexpr unsigned int SOFT_DROP_SPEED = 4;
 //Fall speed at the start of the game. Lower the value, faster the falling

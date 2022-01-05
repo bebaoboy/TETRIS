@@ -275,7 +275,7 @@ std::vector<Position> Tetromino::getMino()
 bool Tetromino::reset(unsigned int shape, const MainMatrix& matrix, std::vector<Position> mino) {
 	//Reset the variables
 	rotation = 0;
-	shape = shape;
+	this->shape = shape;
 
 	minos = std::move(mino);
 
