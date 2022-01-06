@@ -16,6 +16,18 @@ Tetris::Tetris() {
 	line_clear_sound.loadFromFile("Source/Resources/Sounds/line.wav");
 	lost_sound.loadFromFile("Source/Resources/Sounds/gameover.wav");
 	opening_sound.loadFromFile("Source/Resources/Sounds/success.wav");
+
+	music_files = {
+		"Source/Resources/Music/m.mp3",
+		"Source/Resources/Music/m2.mp3",
+		"Source/Resources/Music/m3.mp3",
+		"Source/Resources/Music/m4.mp3",
+		"Source/Resources/Music/m5.mp3",
+		"Source/Resources/Music/m6.mp3",
+		"Source/Resources/Music/m7.mp3",
+		"Source/Resources/Music/m8.mp3",
+		"Source/Resources/Music/m9.mp3"
+	};
 }
 
 void Tetris::start() {
@@ -36,6 +48,19 @@ void Tetris::start() {
 		{
 			lag -= FRAME_DURATION;
 			checkEvent();
+
+			if (is_started) {
+				if (music_player.getStatus() != sf::Music::Playing) {
+					//music_player.openFromFile(music_files[music_distribution(random_engine)]);
+					//music_player.play();
+				}
+			}
+			if (is_viewed && music_player.getStatus() == sf::Music::Playing) {
+				music_player.pause();
+			}
+			if (is_viewed == 0 && music_player.getStatus() == sf::Music::Paused) {
+				music_player.play();
+			}
 
 			if (is_viewed == 0 && clear_effect_timer == 0)
 			{
@@ -135,11 +160,15 @@ void Tetris::start() {
 							clearLines();
 
 							//If the player reached a certain number of score
-							if (scores / peak_score > 0)
+							if (peak_score > 0 && scores / peak_score > 0)
 							{
 								//We increase the game speed
-								setGameSpeed(1);
-								peak_score *= 2;
+								setGameSpeed(7);
+								if (is_tetris)
+									peak_score += T_SCORES_TO_INCREASE_SPEED;
+
+								else
+									peak_score += SCORES_TO_INCREASE_SPEED;
 							}
 
 							//If the effect timer is over
@@ -233,13 +262,22 @@ void Tetris::start() {
 			}
 
 			// Activate gravity mode
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
+			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
 				is_gravity = 1;
+			}
+
+			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
+				is_tetris = 1;
 			}
 
 			if (is_viewed == 1 && is_gravity == 1
 				&& sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
 				is_gravity = 0;
+			}
+
+			if (is_viewed == 1 && is_tetris == 1
+				&& sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
+				is_tetris = 0;
 			}
 
 			// ESCAPE
@@ -374,10 +412,15 @@ void Tetris::clearLines() {
 			clear_lines[a] = 1;
 
 			//If the player reached a certain number of lines
-			if (lines_cleared % LINES_TO_INCREASE_SPEED == 0)
+			if (is_tetris)
 			{
 				//We increase the game speed
-				setGameSpeed(5);
+				if (lines_cleared % T_LINES_TO_INCREASE_SPEED == 0)
+					setGameSpeed(2);
+			}
+			else {
+				if (lines_cleared % LINES_TO_INCREASE_SPEED == 0)
+					setGameSpeed(2);
 			}
 		}
 	}
@@ -390,12 +433,15 @@ void Tetris::clearLines() {
 
 void Tetris::checkLost() {
 	//Decide if the game is over or not based on the return value of the reset function
-	game_over = tetromino.reset(next_shape, matrix, get_tetromino(next_shape, COLUMNS / 2, 1)) == 0;
+	game_over = tetromino.reset(next_shape, matrix, getTetromino(next_shape, COLUMNS / 2, 1)) == 0;
 
 	//Generate the next shape
 	next_shape = shape_distribution(random_engine);
 
 	if (game_over == 1) {
+		if (music_player.getStatus() == sf::Music::Playing) {
+			music_player.stop();
+		}
 
 		player.setBuffer(lost_sound);
 		player.play();
@@ -412,10 +458,14 @@ void Tetris::restart(float& duration) {
 	game_over = 0;
 	hardDrop_pressed = 0;
 	rotate_pressed = 0;
+	is_tetris = 0;
+	is_gravity = 0;
 
 	lines_cleared = 0;
 	scores = 0;
+	peak_score = SCORES_TO_INCREASE_SPEED;
 
+	max_speed_count = 0;
 	current_fall_speed = START_FALL_SPEED;
 	fall_timer = 0;
 	move_timer = 0;
@@ -474,7 +524,7 @@ std::string Tetris::timer(float& duration, sf::Clock& clock) {
 	return timerString;
 }
 
-std::vector<Position> Tetris::get_tetromino(unsigned char i_shape, unsigned char i_x, unsigned char i_y) {
+std::vector<Position> Tetris::getTetromino(unsigned char i_shape, unsigned char i_x, unsigned char i_y) {
 	std::vector<Position> new_tetromino(4);
 
 	//We just set the relative position for every mino
@@ -580,18 +630,177 @@ void Tetris::gravityFalls() {
 						std::swap(matrix[b][c], matrix[b][d]);
 					drawMatrix(true);
 					window.display();
-					for (int i = 0; i < 30000; ++i) {
-						int j = 1;
-						j = j++ * i - i / 2 + i;
-						++j;
-					}
+					delay();
 					c--;
 				}
 			}
 		}
 	}
+	delay(21999);
+	if (player.getStatus() != sf::Sound::Playing) {
+
+		player.setBuffer(normal_drop_sound);
+		player.play();
+	}
 }
 
 void Tetris::setGameSpeed(unsigned int i) {
 	current_fall_speed = std::max<int>(MIN_SPEED, current_fall_speed - i);
+	if (11.f <= (START_FALL_SPEED / static_cast<float>(current_fall_speed))) {
+
+		player.setBuffer(opening_sound);
+		player.play();
+
+		if (is_tetris) {
+			tetrisMode();
+			current_fall_speed = START_FALL_SPEED;
+		}			
+		else {
+			if (player.getStatus() != sf::Sound::Playing) {
+
+				player.setBuffer(opening_sound);
+				player.play();
+			}
+			maxSpeedReached();
+			current_fall_speed = std::max<int>(40, START_FALL_SPEED - max_speed_count);
+			max_speed_count++;
+		}		
+	}
+}
+
+void Tetris::tetrisMode() {
+
+	std::random_device rd; 
+	std::mt19937 seed(rd());
+	std::uniform_int_distribution<int> r_row(0, ROWS - 1), 
+		r_col(0, COLUMNS - 1),
+		del_num(40, ROWS * 3),
+		colors(0,6);
+
+	int num_del_cells = del_num(seed);
+	std::vector<Position> del_cells;
+	for (int i = 0; i < num_del_cells; ++i) {
+		del_cells.push_back(Position{ r_col(seed), r_row(seed) });
+	}
+
+	clear_lines[ROWS - 1] = 1;
+
+	for (int i = 1; i <= num_del_cells * 20; ++i) {
+		
+		// random tile color
+		int r = r_col(seed), c = r_row(seed);
+		int ori = matrix[r][c];
+		matrix[r][c] = colors(seed);
+		drawMatrix();
+		window.display();
+
+		int r2 = r_col(seed), c2 = r_row(seed);
+		int ori2 = matrix[r2][c2];
+		matrix[r2][c2] = colors(seed);
+		drawMatrix();
+		window.display();
+
+		matrix[r][c] = ori;
+		matrix[r2][c2] = ori2;
+
+		// random delete cells
+		if (i % 20 == 0) {
+
+			delay(20000);
+
+			matrix[del_cells.back().x][del_cells.back().y] = 0;
+			del_cells.pop_back();
+
+			drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
+			static_cast<unsigned int>(0.5f * CELL_SIZE * ROWS) + 45,
+			"TETRIS MODE", window, .45f);
+			window.display();
+		}
+
+		delay();
+	}
+	
+	// collapse
+	gravityFalls();
+
+	clear_lines[ROWS - 1] = 0;
+
+	clearLines();
+
+}
+
+void Tetris::maxSpeedReached() {
+	// perform clear line
+	delay();
+
+	std::random_device rd;
+	std::mt19937 seed(rd());
+	std::uniform_int_distribution<int>
+		del_nums(2, 4),
+		del_line(ROWS - 5, ROWS - 1),
+		del_color(0, 6);
+
+	for (int i = 1; i <= del_nums(seed); ++i) {
+		drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
+			static_cast<unsigned int>(0.5f * CELL_SIZE * ROWS) + 45,
+			"MAX SPEED REACHED", window, .45f);
+
+		int line = del_line(seed);
+		clear_lines[line] = 1;
+
+		int color = del_color(seed);
+		for (int j = 0; j < COLUMNS; j++) {
+			matrix[j][line] = color;
+			drawMatrix();
+			window.display();
+			delay(32000);
+		}		
+
+		delay();
+		delay(30001);
+		for (int j = 0; j < COLUMNS; j++) {
+			matrix[j][line] = 0;
+		}
+
+		if (color > 3) clear_lines[del_color(seed)] = 1;
+
+		delay(30001);
+	}
+
+	delay();
+	delay();
+
+	clear_lines[ROWS-1] = 1;
+
+	for (unsigned int a = 0; a < ROWS; a++)
+	{
+		bool is_cleared = 1;
+		//Check if the every cell in the row is filled or not
+		for (unsigned int b = 0; b < COLUMNS; b++)
+		{
+			if (matrix[b][a] == 0)
+			{
+				is_cleared = 0;
+				break;
+			}
+		}
+		if (is_cleared)
+			clear_lines[a] = 1;
+	}
+
+	gravityFalls();
+	drawEffect();
+
+	window.display();
+
+	//Clear the clear lines array
+	std::fill(clear_lines.begin(), clear_lines.end(), 0);
+}
+
+void Tetris::delay(int num) {
+	for (int i = 0; i < num; ++i) {
+		int j = 1;
+		j = j++ * i - i / 2 + i;
+		++j;
+	}
 }

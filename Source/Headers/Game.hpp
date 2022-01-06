@@ -18,6 +18,7 @@ class Tetris
 	int is_rotated = 0;
 
 	bool is_gravity = 0;
+	bool is_tetris = 0;
 
 	//Used to make the game framerate-independent
 	unsigned int lag = 0;
@@ -26,6 +27,7 @@ class Tetris
 
 	//Timer for the line clearing effect
 	unsigned int clear_effect_timer = 0;
+	int max_speed_count = 0;
 
 	unsigned int current_fall_speed = START_FALL_SPEED;
 	//Timer for the tetromino falling
@@ -45,7 +47,6 @@ class Tetris
 	//Similar to lag, used to make the game framerate-independent
 	std::chrono::time_point<std::chrono::steady_clock> previous_time;
 
-	//I don't really know what this does, so I'm gonna assume this is a random device
 	std::random_device random_device;
 
 	std::default_random_engine random_engine{ random_device() };
@@ -82,6 +83,10 @@ class Tetris
 	sf::SoundBuffer line_clear_sound;
 	sf::SoundBuffer rotate_sound;
 
+	sf::Music music_player;
+	std::vector<std::string> music_files;
+	std::uniform_int_distribution<unsigned int> music_distribution{ 0, 8 };
+
 	sf::RenderWindow window{
 		sf::VideoMode(2 * static_cast<unsigned int>(CELL_SIZE) * COLUMNS * SCREEN_RESIZE,
 			static_cast<unsigned int>(CELL_SIZE) * ROWS * SCREEN_RESIZE),
@@ -89,7 +94,7 @@ class Tetris
 
 	unsigned char shape = static_cast<unsigned int>(shape_distribution(random_engine));
 	//Falling tetromino. At the start we're gonna give it a random shape
-	Tetromino tetromino{ shape, get_tetromino(shape, COLUMNS / 2, 1) };
+	Tetromino tetromino{ shape, getTetromino(shape, COLUMNS / 2, 1) };
 	
 public:
 	Tetris();
@@ -103,10 +108,12 @@ private:
 	void checkLost();
 	void restart(float& duration);
 	std::string timer(float& duration, sf::Clock& clock);
-	std::vector<Position> get_tetromino(unsigned char shape, unsigned char i_x, unsigned char i_y);
+	std::vector<Position> getTetromino(unsigned char shape, unsigned char i_x, unsigned char i_y);
 	std::string getTime();
 	void gravityFalls();
 	void setGameSpeed(unsigned int i);
+	void tetrisMode();
+	void maxSpeedReached();
 
 	void drawText(float i_x, float i_y, const std::string& text, sf::RenderWindow& window, float scale = 1.f);
 	void drawBoard(std::string timerString);
@@ -119,5 +126,7 @@ private:
 	void drawHelp();
 	void drawLeaderboard();
 	void dimBackground();
+
+	void delay(int num = 30000);
 };
 

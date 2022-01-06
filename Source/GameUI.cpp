@@ -58,9 +58,9 @@ void Tetris::drawBorder() {
 		drawText(top_x + 6, top_y - 7, "Up next:", window, .4f);
 
 	if (is_gravity)
-		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "Gravity: on", window, .35f);
+		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "(G)ravity: on", window, .3f);
 	else 
-		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "Gravity: off", window, .35f);
+		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "(G)ravity: off", window, .3f);
 }
 
 void Tetris::drawBoard(std::string timerString) {
@@ -110,13 +110,31 @@ void Tetris::drawBoard(std::string timerString) {
 
 		//Drawing the text
 		if (is_started == 1 || game_over == 1) {
+			std::string t;
+			if (is_tetris)
+				t = "on";
+			else
+				t = "off";
+
 			drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 10),
 				static_cast<unsigned int>(0.45f * CELL_SIZE * ROWS),
 				"Lines:" + std::to_string(lines_cleared) +
 				"\nSpeed:" + std::to_string(
 					START_FALL_SPEED / static_cast<float>(current_fall_speed)) + 'x' +
 				"\nTime elapsed: " + timerString +
-				"\nScores: " + std::to_string(scores), window, .3f);
+				"\nScores: " + std::to_string(scores) +
+				"\nTetris mode: " + t, window, .3f);
+			if (START_FALL_SPEED / static_cast<float>(current_fall_speed) >= 6.f) {
+				if (is_tetris)
+					drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
+						static_cast<unsigned int>(0.45f * CELL_SIZE * ROWS + 44),
+						"TETRIS MODE INCOMING...", window, .35f);
+				else
+					drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
+						static_cast<unsigned int>(0.45f * CELL_SIZE * ROWS + 44),
+						"MAX SPEED APPROACHING...", window, .35f);
+			}
+				
 		}		
 
 		if (game_over == 1) {
@@ -176,7 +194,7 @@ void Tetris::drawNext() {
 	if (game_over != 0)
 		cell.setFillColor(cell_colors[8]);
 	cell.setSize(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
-	for (Position& mino : get_tetromino(next_shape,
+	for (Position& mino : getTetromino(next_shape,
 		static_cast<unsigned int>(1.5f * COLUMNS), static_cast<unsigned int>(0.25f * ROWS)))
 	{
 		//Shifting the tetromino to the center of the preview border
@@ -262,7 +280,10 @@ void Tetris::drawPause() {
 	box.setOutlineThickness(-0.5);
 	window.draw(box);
 	drawText(top_x + 28, top_y + 3, "PAUSE", window, .4f);
-	drawText(top_x + size_x - 20, size_y + top_y + 5, "Press O to continue", window, .35f);
+	drawText(top_x + 1, size_y + top_y + 5, 
+		"Press G to disable Gravity\
+		\nPress T to disable Tetris mode\
+		\n\nPress O to continue", window, .35f);
 	window.display();
 }
 
@@ -283,12 +304,19 @@ void Tetris::drawHelp() {
 
 	drawText(top_x + 5, top_y + 10, "C for rotate clockwise\
 		\nZ for counter-clockwise\
-		\nArrow left, right\
+		\n\nArrow left, right\
 		\nArrow down for soft-dropping\
 		\nSpace for hard-dropping\
-		\nFollow the prompts for more.", window, .35f);
+		\n\nG for Gravity Mode\
+		\nT for Tetris Mode\
+		\nF for Prefill\
+		\nP for setting toggle\
+		\n\nFollow the prompts for more.", window, .35f);
 	
-	drawText(size_x - 5, size_y + 35, "Press O to continue", window, .35f);
+	drawText(top_x + 3, size_y + 35, 
+		"Press G to disable Gravity\
+		\nPress T to disable Tetris mode\
+		\n\nPress O to continue", window, .35f);
 	window.display();
 }
 
@@ -326,6 +354,7 @@ void Tetris::dimBackground() {
 	sf::RectangleShape background(sf::Vector2f(
 		2 * static_cast<unsigned int>(CELL_SIZE) * COLUMNS * SCREEN_RESIZE,
 		static_cast<unsigned int>(CELL_SIZE) * ROWS * SCREEN_RESIZE));
-	background.setFillColor(sf::Color(0, 0, 0, 185));
+	background.setFillColor(sf::Color(0, 0, 0, 195));
 	window.draw(background);
 }
+
