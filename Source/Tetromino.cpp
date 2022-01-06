@@ -4,7 +4,7 @@
 #include "Headers/Tetromino.hpp"
 #include "Headers/CheckWallKick.hpp"
 
-Tetromino::Tetromino(unsigned int shape, std::vector<Position> mino) :
+Tetromino::Tetromino(int shape, std::vector<Position> mino) :
 	shape{ shape },
 	minos{ std::move(mino) } {}
 
@@ -272,7 +272,7 @@ std::vector<Position> Tetromino::getMino()
 	return minos;
 }
 
-bool Tetromino::reset(unsigned int shape, const MainMatrix& matrix, std::vector<Position> mino) {
+bool Tetromino::reset(int shape, const MainMatrix& matrix, std::vector<Position> mino) {
 	//Reset the variables
 	rotation = 0;
 	this->shape = shape;
@@ -292,7 +292,7 @@ bool Tetromino::reset(unsigned int shape, const MainMatrix& matrix, std::vector<
 	return 1;
 }
 
-unsigned int Tetromino::getShapeCode() {
+int Tetromino::getShapeCode() {
 	//I'm gonna take a wild guess and say that this return the shape of the tetromino
 	return shape;
 }

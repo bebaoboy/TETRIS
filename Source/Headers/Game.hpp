@@ -43,6 +43,12 @@ class Tetris
 	unsigned int soft_drop_timer = 0;
 	sf::Clock clock;
 	float duration = 0.f;
+
+	int special = 0;
+	int time_before_hold = 0;
+
+	int emergency = 0;
+	int time_before_x = 0;
 	
 	// Scoring
 	unsigned long scores = 0;
@@ -99,6 +105,7 @@ class Tetris
 	unsigned char shape = static_cast<unsigned int>(shape_distribution(random_engine));
 	//Falling tetromino. At the start we're gonna give it a random shape
 	Tetromino tetromino{ shape, getTetromino(shape, COLUMNS / 2, 1) };
+	Tetromino holding_tetromino;
 	
 public:
 	Tetris();
@@ -118,12 +125,14 @@ private:
 	void setGameSpeed(unsigned int i);
 	void tetrisMode();
 	void maxSpeedReached();
+	void prefillMode();
 
 	void drawText(float i_x, float i_y, const std::string& text, sf::RenderWindow& window, float scale = 1.f);
 	void drawBoard(std::string timerString);
 	void drawBorder();
 	void drawGhost();
 	void drawNext();
+	void drawHold();
 	void drawMatrix(bool is_gravity = false);
 	void drawEffect();
 	void drawPause();

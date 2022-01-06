@@ -1,4 +1,5 @@
 #include "Headers/Game.hpp"
+#include <iostream>
 
 void Tetris::drawText(float i_x, float i_y, const std::string& i_text, sf::RenderWindow& i_window, float scale)
 {
@@ -58,9 +59,9 @@ void Tetris::drawBorder() {
 		drawText(top_x + 6, top_y - 7, "Up next:", window, .4f);
 
 	if (is_gravity)
-		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "(G)ravity: on", window, .3f);
+		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "[G]ravity: on", window, .3f);
 	else 
-		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "(G)ravity: off", window, .3f);
+		drawText(top_x + 2, top_y + 5 * CELL_SIZE - 6, "[G]ravity: off", window, .3f);
 }
 
 void Tetris::drawBoard(std::string timerString) {
@@ -106,32 +107,37 @@ void Tetris::drawBoard(std::string timerString) {
 		//Draw the next tetromino
 		if (game_over == 0 && 1 == is_started) {
 			drawNext();
+			drawHold();
 		}
 
 		if (music_player[0]->getVolume() == 0) {
-			drawText(2, 1, "Mute (M)usic", window, .31f);
+			drawText(2, 1, "Mute [M]usic", window, .31f);
 		}
 
 		if (player.getVolume() == 0) {
-			drawText(47, 1, "Mute (S)ound", window, .31f);
+			drawText(47, 1, "Mute [S]ound", window, .31f);
 		}
 
 		//Drawing the text
 		if (is_started == 1 || game_over == 1) {
-			std::string t;
+			std::string t,z;
 			if (is_tetris)
 				t = "on";
 			else
 				t = "off";
+			if (emergency == 0)
+				z = "     [X]";
+			else
+				z = "";
 
 			drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 10),
 				static_cast<unsigned int>(0.45f * CELL_SIZE * ROWS) + 3,
-				"Lines:" + std::to_string(lines_cleared) +
+				"Lines:" + std::to_string(lines_cleared) + z +
 				"\nSpeed:" + std::to_string(
 					START_FALL_SPEED / static_cast<float>(current_fall_speed)) + 'x' +
 				"\nTime elapsed: " + timerString +
-				"\nScores: " + std::to_string(scores) +
-				"\n(T)etris mode: " + t, window, .3f);
+				"\nScores: " + std::to_string(scores) + "/" + std::to_string(peak_score) +
+				"\n[T]etris mode: " + t, window, .3f);
 			if (START_FALL_SPEED / static_cast<float>(current_fall_speed) >= 6.f) {
 				if (is_tetris)
 					drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
@@ -165,7 +171,7 @@ void Tetris::drawBoard(std::string timerString) {
 		if (is_started == 1 && game_over == 0) {
 			drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
 				static_cast<unsigned int>(0.5f * CELL_SIZE * ROWS) + 59,
-				"Press P to pause", window, .3f);
+				"Press P to setting", window, .3f);
 		}
 
 		drawText(static_cast<unsigned int>(CELL_SIZE * (1 + COLUMNS) + 8),
@@ -221,29 +227,32 @@ void Tetris::drawNext() {
 
 		window.draw(cell);
 	}
+}
 
-	sf::RectangleShape cell2{ sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1) };
-	cell2.setFillColor(cell_colors[1 + static_cast<size_t>(next_shape)]);
-	if (game_over != 0)
-		cell2.setFillColor(cell_colors[8]);
-	cell2.setSize(sf::Vector2f((CELL_SIZE - 1) * .4f, (CELL_SIZE - 1) * .4f));
-	for (Position& mino : getTetromino(next_shape,
-		static_cast<unsigned int>(1.5f * COLUMNS), static_cast<unsigned int>(0.25f * ROWS)))
-	{
-		//Shifting the tetromino to the center of the preview border
-		float next_tetromino_x = CELL_SIZE * mino.x * .4f;
-		float next_tetromino_y = CELL_SIZE * mino.y * .4f;
+void Tetris::drawHold() {
+	if (holding_tetromino.getShapeCode() != -1) {
+		unsigned int next_shape = holding_tetromino.getShapeCode();
+		sf::RectangleShape cell2{ sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1) };
+		cell2.setFillColor(cell_colors[1 + static_cast<size_t>(next_shape)]);
+		if (game_over != 0)
+			cell2.setFillColor(cell_colors[8]);
+		cell2.setSize(sf::Vector2f((CELL_SIZE - 1) * .4f, (CELL_SIZE - 1) * .4f));
+		for (Position& mino : holding_tetromino.getMino())
+		{
+			float next_tetromino_x = CELL_SIZE * mino.x * .4f;
+			float next_tetromino_y = CELL_SIZE * mino.y * .4f;
 
-		if (next_shape == 0) // I shape
-			next_tetromino_y += static_cast<unsigned int>(round(0.5f * CELL_SIZE)) - .7f;
-		else if (next_shape != 3) // O shape
-			next_tetromino_x -= static_cast<unsigned int>(round(0.5f * CELL_SIZE));
+			if (next_shape == 0) // I shape
+				next_tetromino_y += static_cast<unsigned int>(round(0.5f * CELL_SIZE)) - .7f;
+			else if (next_shape != 3) // O shape
+				next_tetromino_x -= static_cast<unsigned int>(round(0.5f * CELL_SIZE));
 
-		cell2.setPosition(next_tetromino_x + 80, next_tetromino_y + 47.5f);
+			cell2.setPosition(next_tetromino_x + 117, next_tetromino_y + 60);
 
-		window.draw(cell2);
-	}
-	drawText(103, 63, "Holding", window, .26f);
+			window.draw(cell2);
+		}
+	}	
+	drawText(103, 60, "[H]olding:\n[Shift]", window, .24f);
 }
 
 void Tetris::drawMatrix(bool is_gravity) {
@@ -291,9 +300,10 @@ void Tetris::drawEffect() {
 
 				window.draw(cell);
 
-				player.setBuffer(line_clear_sound);
-				player.play();
-
+				if (player.getStatus() != sf::Sound::Playing) {
+					player.setBuffer(line_clear_sound);
+					player.play();
+				}
 				tetromino.hardDrop(matrix);
 			}
 		}
@@ -315,10 +325,10 @@ void Tetris::drawPause() {
 	window.draw(box);
 	drawText(top_x + 28, top_y + 3, "PAUSE", window, .4f);
 	drawText(top_x + 1, size_y + top_y + 5, 
-		"Press G to disable Gravity\
-		\nPress T to disable Tetris mode\
-		\nPress M or S to turn on music/sound\
-		\n\nPress O to continue", window, .35f);
+		"Press (G) to disable Gravity\
+		\nPress (T) to disable Tetris mode\
+		\nPress (M) or (S) to turn on music/sound\
+		\n\nPress (O) to continue", window, .35f);
 	window.display();
 }
 
@@ -327,7 +337,7 @@ void Tetris::drawHelp() {
 	// O to exit
 	dimBackground();
 
-	float top_x = 33, top_y = 27;
+	float top_x = 33, top_y = 23;
 	float size_x = 100, size_y = 90;
 
 	sf::RectangleShape help_border(sf::Vector2f(size_x, size_y));
@@ -337,22 +347,25 @@ void Tetris::drawHelp() {
 	drawText(top_x - 10, top_y - 7, "HELP", window, .4f);
 	window.draw(help_border);
 
-	drawText(top_x + 5, top_y + 10, "C for rotate clockwise\
-		\nZ for counter-clockwise\
+	drawText(top_x + 6, top_y + 5, 
+		"(C) for rotate clockwise\
+		\n(Z) for counter-clockwise\
 		\n\nArrow left, right\
 		\nArrow down for soft-dropping\
-		\nSpace for hard-dropping\
-		\n\nG for Gravity Mode\
-		\nT for Tetris Mode\
-		\nF for Prefill\
-		\nP for setting toggle\
-		\n\nFollow the prompts for more.", window, .35f);
+		\n(Space) for hard-dropping\
+		\n(H) for holding a tetromino, (Shift) to use\
+		\n\nIn game:\n(G) for Gravity Mode\
+		\n(T) for Tetris Mode\
+		\n(F) for Prefill\
+		\n(P) for setting toggle\
+		\n(F) for prefill mode\
+		\n\nFollow the prompts for more.", window, .32f);
 	
 	drawText(top_x + 3, size_y + 35, 
-		"Press G to disable Gravity\
-		\nPress T to disable Tetris mode\
-		\nPress M or S to turn on music/sound\
-		\n\nPress O to continue", window, .35f);
+		"Press (G) to disable Gravity\
+		\nPress (T)to disable Tetris mode\
+		\nPress (M)/(S)to turn on music/sound\
+		\n\nPress (O)to continue", window, .35f);
 	window.display();
 }
 
@@ -386,7 +399,7 @@ void Tetris::drawLeaderboard() {
 
 	drawText(top_x + 5, top_y + 14, s, window, .33f);
 
-	drawText(size_x - 5, size_y + 35, "Press O to continue", window, .35f);
+	drawText(size_x - 5, size_y + 35, "Press (O) to continue", window, .35f);
 	window.display();
 }
 

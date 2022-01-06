@@ -4,16 +4,17 @@
 class Tetromino
 {
 	unsigned int rotation = 0;
-	unsigned int shape;
+	int shape = -1;
 
 	std::vector<Position> minos;
 public:
-	Tetromino(unsigned int shape, std::vector<Position> mino);
+	Tetromino() {}
+	Tetromino(int shape, std::vector<Position> mino);
 
 	bool moveDown(const MainMatrix& matrix);
-	bool reset(unsigned int shape, const MainMatrix& matrix, std::vector<Position> mino);
+	bool reset(int shape, const MainMatrix& matrix, std::vector<Position> mino);
 
-	unsigned int getShapeCode(); 
+	int getShapeCode(); 
 
 	void hardDrop(const MainMatrix& matrix);
 	void moveLeft(const MainMatrix& matrix);

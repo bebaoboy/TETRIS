@@ -10,16 +10,16 @@ constexpr unsigned int ROWS = 20;
 constexpr unsigned int SCREEN_RESIZE = 4;
 
 //Lines needed to increase the game speed
-constexpr unsigned int LINES_TO_INCREASE_SPEED = 4;
-constexpr unsigned int SCORES_TO_INCREASE_SPEED = 6500;
-constexpr unsigned int T_LINES_TO_INCREASE_SPEED = 3;
+constexpr unsigned int LINES_TO_INCREASE_SPEED = 3;
+constexpr unsigned int SCORES_TO_INCREASE_SPEED = 5000;
+constexpr unsigned int T_LINES_TO_INCREASE_SPEED = 2;
 constexpr unsigned int T_SCORES_TO_INCREASE_SPEED = 4000;
 
 constexpr unsigned int MOVE_SPEED = 4;
-constexpr unsigned int SOFT_DROP_SPEED = 4;
+constexpr unsigned int SOFT_DROP_SPEED = 3;
 //Fall speed at the start of the game. Lower the value, faster the falling
-constexpr unsigned int START_FALL_SPEED = 60;
-constexpr unsigned int MIN_SPEED = 4;
+constexpr unsigned int START_FALL_SPEED = 61;
+constexpr unsigned int MIN_SPEED = 2;
 
 //The duration of the line clearing effect
 constexpr unsigned int CLEAR_EFFECT_DURATION = 25;
@@ -27,6 +27,8 @@ constexpr unsigned int CLEAR_EFFECT_DURATION = 25;
 constexpr unsigned int ROTATE_LAG = 500;
 //The duration of every frame
 constexpr unsigned int FRAME_DURATION = 16667;
+constexpr int HOLD_DURATION = 7;
+constexpr int EMERGENCY_DURATION = 15;
 
 // Scoring system
 constexpr unsigned int NORMAL_DROP_SCORE = 15;
