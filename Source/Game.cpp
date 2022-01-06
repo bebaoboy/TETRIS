@@ -18,23 +18,50 @@ Tetris::Tetris() {
 	opening_sound.loadFromFile("Source/Resources/Sounds/success.wav");
 
 	music_files = {
-		"Source/Resources/Music/m.mp3",
-		"Source/Resources/Music/m2.mp3",
-		"Source/Resources/Music/m3.mp3",
-		"Source/Resources/Music/m4.mp3",
-		"Source/Resources/Music/m5.mp3",
-		"Source/Resources/Music/m6.mp3",
-		"Source/Resources/Music/m7.mp3",
-		"Source/Resources/Music/m8.mp3",
-		"Source/Resources/Music/m9.mp3"
+		{
+			0, {
+				"Source/Resources/Music/n1.ogg",
+				"Source/Resources/Music/m6.ogg",
+				"Source/Resources/Music/gnm.ogg"
+	        }
+		},
+		{
+			1, {
+				"Source/Resources/Music/n1.ogg",
+				"Source/Resources/Music/n2.ogg",
+				"Source/Resources/Music/n3.ogg",
+				"Source/Resources/Music/n8.ogg",
+				"Source/Resources/Music/n9.ogg",
+				"Source/Resources/Music/n10.ogg"
+			}
+		},
+		{
+			2, {
+				"Source/Resources/Music/g2.ogg",
+				"Source/Resources/Music/g5.ogg",
+				"Source/Resources/Music/g9.ogg",
+				"Source/Resources/Music/gnm.ogg"
+			}
+		},
+		{
+			3, {
+				"Source/Resources/Music/t0.ogg",
+				"Source/Resources/Music/t1.ogg",
+				"Source/Resources/Music/t4.ogg",
+				"Source/Resources/Music/t7.ogg",
+				"Source/Resources/Music/n8.ogg"
+			}
+		}
 	};
+
+	music_player.emplace_back(std::make_unique<sf::Music>()); // menu
+	music_player.emplace_back(std::make_unique<sf::Music>()); // normal
+	music_player.emplace_back(std::make_unique<sf::Music>()); // gravity
+	music_player.emplace_back(std::make_unique<sf::Music>()); // tetris
 }
 
 void Tetris::start() {
 	//While the window is open
-	sf::Clock clock;
-	float duration = 0.f;
-
 
 	player.setBuffer(opening_sound);
 	player.play();
@@ -48,19 +75,33 @@ void Tetris::start() {
 		{
 			lag -= FRAME_DURATION;
 			checkEvent();
+			if ((player.getStatus() != sf::Sound::Playing && noneIsPaused())
+			&& (is_started == 0 || game_over == 1)) {
+				playMusic(0); // main menu
+			}
 
-			if (is_started) {
-				if (music_player.getStatus() != sf::Music::Playing) {
-					//music_player.openFromFile(music_files[music_distribution(random_engine)]);
-					//music_player.play();
-				}
+			if (is_viewed) {
+				pauseMusic();
 			}
-			if (is_viewed && music_player.getStatus() == sf::Music::Playing) {
-				music_player.pause();
+			else {
+				resumeMusic();
 			}
-			if (is_viewed == 0 && music_player.getStatus() == sf::Music::Paused) {
-				music_player.play();
+
+			if (game_over == 0 && is_viewed == 0 && is_started == 1
+				&& is_tetris == 0 && is_gravity == 0 && !isPlaying(1)) {
+				playMusic(1); // normal
 			}
+
+			if (game_over == 0 && is_started && is_tetris 
+			 && noneIsPaused() && !isPlaying(3) && !isPlaying(2)) {
+				playMusic(3); // tetris
+			}
+
+			if (game_over == 0 && is_started && is_gravity 
+			 && noneIsPaused() && !isPlaying(2) && !isPlaying(3)) {
+				playMusic(2); // gravity
+			}
+
 
 			if (is_viewed == 0 && clear_effect_timer == 0)
 			{
@@ -75,14 +116,20 @@ void Tetris::start() {
 							tetromino.rotate(1, matrix);
 							player.setBuffer(rotate_sound);
 						    player.play();
-						} 
+							scores = static_cast<unsigned int>(std::max<double>(0.,
+								static_cast<double>(scores) - NORMAL_DROP_SCORE * .3 *
+								(START_FALL_SPEED / static_cast<double>(current_fall_speed))));
+						}
 						else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
 						{
 							rotate_pressed = 1;
 							tetromino.rotate(0, matrix);
 							player.setBuffer(rotate_sound);
 							player.play();
-						}						
+							scores = static_cast<unsigned int>(std::max<double>(0., 
+								static_cast<double>(scores) - NORMAL_DROP_SCORE * .3 *
+								(START_FALL_SPEED / static_cast<double>(current_fall_speed))));
+						}
 					}
 
 					if (move_timer == 0)
@@ -188,7 +235,9 @@ void Tetris::start() {
 						if (is_rotated != 0)
 							is_rotated++;
 						if (rotate_pressed == 0 || (rotate_pressed && is_rotated == ROTATE_LAG))
+						{
 							fall_timer++;
+						}
 					}
 				}
 
@@ -199,6 +248,8 @@ void Tetris::start() {
 					// replay
 					if (is_viewed == 0 && is_started == 0 && 
 						sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
+						stopMusic();
+						playMusic(1); // normal
 						is_started = 1;
 					}
 					
@@ -259,25 +310,54 @@ void Tetris::start() {
 
 				player.setBuffer(opening_sound);
 				player.play();
+
+				stopMusic();
 			}
 
 			// Activate gravity mode
-			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
+			if (is_gravity == 0 && is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
 				is_gravity = 1;
+				stopMusic();
+				playMusic(2); // gravity
 			}
 
-			if (is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
+			if (is_tetris == 0 && is_viewed == 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
 				is_tetris = 1;
+				stopMusic();
+				playMusic(3); // tetris
 			}
 
 			if (is_viewed == 1 && is_gravity == 1
 				&& sf::Keyboard::isKeyPressed(sf::Keyboard::G)) {
 				is_gravity = 0;
+				music_player[2]->stop();
 			}
 
 			if (is_viewed == 1 && is_tetris == 1
 				&& sf::Keyboard::isKeyPressed(sf::Keyboard::T)) {
 				is_tetris = 0;
+				music_player[3]->stop();
+			}
+
+			// Music and sound effect
+			if (is_viewed == 1
+				&& sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {
+				setVolume(70);
+			}
+
+			if (is_viewed == 1
+				&& sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+				player.setVolume(100);
+			}
+
+			if (is_viewed == 0 && music_player[0]->getVolume() != 0
+				&& sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {
+				setVolume(0);
+			}
+
+			if (is_viewed == 0 && player.getVolume() != 0
+				&& sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+				player.setVolume(0);
 			}
 
 			// ESCAPE
@@ -439,9 +519,6 @@ void Tetris::checkLost() {
 	next_shape = shape_distribution(random_engine);
 
 	if (game_over == 1) {
-		if (music_player.getStatus() == sf::Music::Playing) {
-			music_player.stop();
-		}
 
 		player.setBuffer(lost_sound);
 		player.play();
@@ -449,7 +526,9 @@ void Tetris::checkLost() {
 		tetromino.hardDrop(matrix);
 		scores += std::max<int>((lines_cleared - LINE_BONUS) * LINE_BONUS_SCORE, 0);
 
-		score_list.emplace_back(getTime(),scores);
+		score_list.emplace_back(getTime(),std::make_pair(timer(duration, clock),scores));
+
+		stopMusic();
 	}
 }
 
@@ -647,13 +726,14 @@ void Tetris::gravityFalls() {
 void Tetris::setGameSpeed(unsigned int i) {
 	current_fall_speed = std::max<int>(MIN_SPEED, current_fall_speed - i);
 	if (11.f <= (START_FALL_SPEED / static_cast<float>(current_fall_speed))) {
+		setVolume(40);
 
 		player.setBuffer(opening_sound);
 		player.play();
 
 		if (is_tetris) {
 			tetrisMode();
-			current_fall_speed = START_FALL_SPEED;
+			current_fall_speed = std::max<int>(36, START_FALL_SPEED - max_speed_count);
 		}			
 		else {
 			if (player.getStatus() != sf::Sound::Playing) {
@@ -662,10 +742,16 @@ void Tetris::setGameSpeed(unsigned int i) {
 				player.play();
 			}
 			maxSpeedReached();
-			current_fall_speed = std::max<int>(40, START_FALL_SPEED - max_speed_count);
-			max_speed_count++;
-		}		
+			current_fall_speed = std::max<int>(36, START_FALL_SPEED - max_speed_count / 3 * 2);
+		}	
+
+		max_speed_count++;
+
+		//tetromino.reset(next_shape, matrix, getTetromino(next_shape, COLUMNS / 2, 1));
+		fall_timer = 0;
 	}
+	if (music_player[0]->getVolume() != 0)
+		setVolume(70);
 }
 
 void Tetris::tetrisMode() {
@@ -674,7 +760,7 @@ void Tetris::tetrisMode() {
 	std::mt19937 seed(rd());
 	std::uniform_int_distribution<int> r_row(0, ROWS - 1), 
 		r_col(0, COLUMNS - 1),
-		del_num(40, ROWS * 3),
+		del_num(27, ROWS * 3 - max_speed_count),
 		colors(0,6);
 
 	int num_del_cells = del_num(seed);
@@ -736,8 +822,8 @@ void Tetris::maxSpeedReached() {
 	std::random_device rd;
 	std::mt19937 seed(rd());
 	std::uniform_int_distribution<int>
-		del_nums(2, 4),
-		del_line(ROWS - 5, ROWS - 1),
+		del_nums(2, 3),
+		del_line(ROWS - 6, ROWS - 1),
 		del_color(0, 6);
 
 	for (int i = 1; i <= del_nums(seed); ++i) {
@@ -762,9 +848,23 @@ void Tetris::maxSpeedReached() {
 			matrix[j][line] = 0;
 		}
 
-		if (color > 3) clear_lines[del_color(seed)] = 1;
+		if (color > 3) {
+			int t = del_color(seed);
+			if (clear_lines[t] != 1) {
+				for (int i = 0; i < COLUMNS; i++) {
+					if (matrix[i][t] == 1) {
+						clear_lines[t] = 1;
+						break;
+					}
+				}
+				for (int j = 0; j < COLUMNS; j++) {
+					matrix[j][t] = 0;
+				}
+			}
+		}
 
 		delay(30001);
+		delay(30030);
 	}
 
 	delay();
@@ -784,17 +884,24 @@ void Tetris::maxSpeedReached() {
 				break;
 			}
 		}
-		if (is_cleared)
+		if (is_cleared) {
+			for (unsigned int b = 0; b < COLUMNS; b++)
+			{
+				matrix[b][a] = 0;
+			}
 			clear_lines[a] = 1;
+		}
+			
 	}
 
 	gravityFalls();
-	drawEffect();
+	clearLines();
+	//drawEffect();
 
 	window.display();
 
 	//Clear the clear lines array
-	std::fill(clear_lines.begin(), clear_lines.end(), 0);
+	//std::fill(clear_lines.begin(), clear_lines.end(), 0);
 }
 
 void Tetris::delay(int num) {
@@ -803,4 +910,58 @@ void Tetris::delay(int num) {
 		j = j++ * i - i / 2 + i;
 		++j;
 	}
+}
+
+void Tetris::playMusic(int choice, int volume) {
+	sf::Music *player = music_player[choice].get();
+	if (player->getStatus() != sf::Music::Playing) {
+		player->openFromFile(getMusic(choice));
+		if (player->getVolume() != 0)
+			player->setVolume(static_cast<float>(volume));
+		player->play();
+	}
+}
+
+bool Tetris::isPlaying(std::unique_ptr<sf::Music>& ms) {
+	return ms->getStatus() == sf::Music::Playing;
+}
+
+bool Tetris::isPlaying(int choice) {
+	return music_player[choice]->getStatus() == sf::Music::Playing;
+}
+
+bool Tetris::noneIsPaused() {
+	for (auto& ms : music_player)
+		if (ms->getStatus() == sf::Music::Paused)
+			return false;
+	return true;
+}
+
+void Tetris::stopMusic() {
+	for (auto& ms : music_player)
+		if (isPlaying(ms))
+			ms->stop();
+}
+
+void Tetris::pauseMusic() {
+	for (auto& ms : music_player)
+		if (isPlaying(ms))
+			ms->pause();
+}
+
+void Tetris::resumeMusic() {
+	for (auto& ms : music_player)
+		if (ms->getStatus() == sf::Music::Paused)
+			ms->play();
+}
+
+std::string Tetris::getMusic(int choice) {
+	std::uniform_int_distribution<int> 
+		music_distribution{ 0, static_cast<int>(music_files[static_cast<size_t>(choice)].size()) - 1 };
+	return music_files[choice][music_distribution(random_engine)];	
+}
+
+void Tetris::setVolume(int volume) {
+	for (auto& ms : music_player)
+		ms->setVolume(static_cast<float>(volume));
 }

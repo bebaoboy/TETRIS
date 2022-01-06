@@ -1,6 +1,9 @@
 #pragma once
 #include <chrono>
 #include <random>
+#include <map>
+#include <memory>
+#include <string>
 
 #include "Tetromino.hpp"
 #include <SFML/Audio.hpp>
@@ -38,11 +41,13 @@ class Tetris
 	unsigned int next_shape;
 	//Timer for the tetromino's soft drop
 	unsigned int soft_drop_timer = 0;
+	sf::Clock clock;
+	float duration = 0.f;
 	
 	// Scoring
 	unsigned long scores = 0;
 	unsigned long peak_score = SCORES_TO_INCREASE_SPEED;
-	std::vector<std::pair< std::string, unsigned long>> score_list;
+	std::vector<std::pair< std::string, std::pair<std::string, unsigned long>>> score_list;
 
 	//Similar to lag, used to make the game framerate-independent
 	std::chrono::time_point<std::chrono::steady_clock> previous_time;
@@ -83,9 +88,8 @@ class Tetris
 	sf::SoundBuffer line_clear_sound;
 	sf::SoundBuffer rotate_sound;
 
-	sf::Music music_player;
-	std::vector<std::string> music_files;
-	std::uniform_int_distribution<unsigned int> music_distribution{ 0, 8 };
+	std::vector<std::unique_ptr<sf::Music>> music_player;
+	std::map<int, std::vector<std::string>> music_files;
 
 	sf::RenderWindow window{
 		sf::VideoMode(2 * static_cast<unsigned int>(CELL_SIZE) * COLUMNS * SCREEN_RESIZE,
@@ -128,5 +132,14 @@ private:
 	void dimBackground();
 
 	void delay(int num = 30000);
+	void playMusic(int choice, int volume = 70);
+	bool isPlaying(std::unique_ptr<sf::Music>& ms);
+	bool isPlaying(int choice);
+	bool noneIsPaused();
+	void stopMusic();
+	void pauseMusic();
+	void resumeMusic();
+	void setVolume(int volume = 70);
+	std::string getMusic(int choice);
 };
 
