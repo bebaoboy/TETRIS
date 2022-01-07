@@ -953,6 +953,7 @@ void Tetris::maxSpeedReached() {
 	//clearLines();
 
 	window.display();
+	clear_lines[ROWS - 1] = 0;
 
 	//Clear the clear lines array
 	//std::fill(clear_lines.begin(), clear_lines.end(), 0);
