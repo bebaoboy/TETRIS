@@ -8,6 +8,9 @@ Hi this is my tetris game. It's a remake from the famous game tetris with some t
 - Tetris mode: a SPECIAL mode in the game.
 - Setting music and sound.
 Enjoy. <br>
+
+Youtube: https://youtu.be/Bt2wJowsZxY
+
 Screenshot <br>
 ![image](https://user-images.githubusercontent.com/74720131/230724641-2bd6a099-d56e-4ae0-899b-dd922e4d35f1.png)
 ![image](https://user-images.githubusercontent.com/74720131/230724649-89f8744e-5efc-4752-8c6c-f63382b18dc2.png)
